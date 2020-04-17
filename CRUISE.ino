@@ -47,7 +47,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-Serial.begin(9600);
+//Serial.begin(115200);
 CAN.begin(500E3);
 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -295,8 +295,6 @@ lastbuttonstate4 = buttonstate4;
         BRAKE_PRESSED = (dat_224[0] << 5);
         }
   
-Serial.print("BRAKE_PRESSED = ");
-Serial.print(BRAKE_PRESSED);
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
@@ -307,10 +305,7 @@ Serial.print(BRAKE_PRESSED);
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
-Serial.print("GAS_RELEASED = ");
-Serial.print(GAS_RELEASED);
-Serial.println("");
-    
+        
 }
 
 void rpm() {
