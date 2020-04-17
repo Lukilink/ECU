@@ -38,7 +38,7 @@ boolean BRAKE_PRESSED = true;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
- Serial.begin(115200);
+// Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -71,7 +71,6 @@ else
   {
    analogWrite(breaklightPin, 0);
   }
-Serial.println(currentPressure);
 
 //________________read ACC_CMD from CANbus
  CAN.parsePacket();
@@ -144,9 +143,6 @@ if (currentPressure >= (targetPressure + 20))
 else {
         BRAKE_PRESSED = false;
      }
-Serial.print("BRAKE_PRESSED = ");
-Serial.print(BRAKE_PRESSED);
-Serial.println("");
     
 //________________send_OND_CAN-BUS
     
