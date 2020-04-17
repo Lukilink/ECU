@@ -5,8 +5,8 @@ int button4 = 8;
 int button3 = 7;
 int button2 = 6;
 int button1 = 9;
-int pedal = A4;
-boolean pedalstate = false;
+int CluchSwitch = A4;
+boolean ClutchSwitchState = false;
 int buttonstate4;
 int lastbuttonstate4;
 int buttonstate3;
@@ -15,9 +15,12 @@ int buttonstate2;
 int lastbuttonstate2;
 int buttonstate1;
 int lastbuttonstate1;
+boolean lastGAS_RELEASED = false;
+boolean lastBRAKE_PRESSED = false;
 
 //______________VALUES SEND ON CAN
 boolean OP_ON = false;
+boolean MAIN_ON = true;
 uint8_t set_speed = 0x0;
 double average = 0; 
 boolean blinker_left = true;
@@ -28,6 +31,7 @@ float LEAD_LONG_DIST_RAW = 0;
 float LEAD_REL_SPEED_RAW = 0;
 boolean BRAKE_PRESSED = true;
 boolean GAS_RELEASED = false;
+
 
 //______________FOR SMOOTHING SPD
 const int numReadings = 160;
@@ -47,7 +51,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-//Serial.begin(115200);
+Serial.begin(115200);
 CAN.begin(500E3);
 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -97,20 +101,39 @@ if (half_revolutions >= 1) {
   // send it to the computer as ASCII digits
 
 //______________READING BUTTONS AND SWITCHES
-pedalstate = digitalRead(pedal);
+ClutchSwitchState = digitalRead(CluchSwitch);
 buttonstate4 = digitalRead(button4);
 buttonstate3 = digitalRead(button3);
 buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
+//______________SET OP OFF WHEN BRAKE IS PRESSED
 
+if (BRAKE_PRESSED != lastBRAKE_PRESSED)
+    {
+       if (BRAKE_PRESSED == true)
+       {
+       OP_ON = false;
+       }
+    }
+    
+//______________SET OP OFF WHEN GAS IS PRESSED
+if (GAS_RELEASED != lastGAS_RELEASED)
+    {
+       if (GAS_RELEASED == false)
+       {
+       OP_ON = false;
+       }
+    }
+
+//______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
        if (buttonstate4 == LOW)
        {
           if (OP_ON == true)
           {
-          OP_ON = false;
+          set_speed = set_speed + 5;
           }
           else if(OP_ON == false)
           {
@@ -119,8 +142,24 @@ if (buttonstate4 != lastbuttonstate4)
           }
         }
      }
-
-if (buttonstate3 == LOW)
+     
+//______________SET BUTTON NR3
+if (buttonstate3 != lastbuttonstate3)
+    {
+       if (buttonstate3 == LOW)
+       {
+       set_speed = set_speed - 5;
+       }
+    }
+    
+//______________LIMIT FOR SETSPEED
+if (set_speed > 200)
+    { 
+      set_speed = 0;
+    }
+    
+//______________SET BUTTON NR2
+if (buttonstate2 == LOW)
    {
    blinker_right = false;
    }
@@ -129,32 +168,28 @@ if (buttonstate3 == LOW)
    blinker_right = true;
    }
 
-if (buttonstate2 == LOW)
-   {
+//______________SET BUTTON NR1
+if (buttonstate1 == LOW)
+  {
    blinker_left = false;
    }
   else
    {
    blinker_left = true;
    }
-
-if (buttonstate1 != lastbuttonstate1)
-    {
-       if (buttonstate1 == LOW)
-       {
-       set_speed += 5;
-       }
-    }
-    
-if (pedalstate == LOW)
+   
+//______________SET CLUTCH
+if (ClutchSwitchState == LOW)
    {
-  //  Serial.println("Pedal is pressed");
+  //  Serial.println("Clutch Pedal is pressed");
    }
 
 lastbuttonstate1 = buttonstate1;
 lastbuttonstate2 = buttonstate2;
 lastbuttonstate3 = buttonstate3;
 lastbuttonstate4 = buttonstate4;
+lastBRAKE_PRESSED = BRAKE_PRESSED;
+lastGAS_RELEASED = GAS_RELEASED;
 
 //______________SENDING_CAN_MESSAGES
 
@@ -177,7 +212,7 @@ lastbuttonstate4 = buttonstate4;
   //0x1d3 msg PCM_CRUISE_2
   uint8_t dat_1d3[8];
   dat_1d3[0] = 0x0;
-  dat_1d3[1] = (OP_ON << 7) & 0x80 | 0x28;
+  dat_1d3[1] = (MAIN_ON << 7) & 0x80 | 0x28;
   dat_1d3[2] = set_speed;
   dat_1d3[3] = 0x0;
   dat_1d3[4] = 0x0;
@@ -294,7 +329,6 @@ lastbuttonstate4 = buttonstate4;
         }
         BRAKE_PRESSED = (dat_224[0] << 5);
         }
-  
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
