@@ -1,4 +1,5 @@
-/*BRAKE
+/* BRAKE
+ * DONT USE ON PUBLIC ROADS!
 */
 
 //________________import can libary https://github.com/sandeepmistry/arduino-CAN
