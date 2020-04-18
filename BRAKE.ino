@@ -13,7 +13,6 @@ int maxPressure = 430; // the max pressure your actuator is able to aply
 int minPressure = 75; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
-int actuatorDisengageDelay = 50; //time to disengage in ms
 
 //________________define_pins
 int cancel_pin = 3;
@@ -32,7 +31,6 @@ float ACC_CMD = 0;
 float ACC_CMD1 = 0;
 boolean cancel = false;
 boolean BRAKE_PRESSED = true;
-unsigned long time_now = 0;
 
 
 void setup() {
@@ -135,19 +133,16 @@ else {
 
 //________________logic to read if brake is pressed by human
     
-if (currentPressure >= (targetPressure + 40))
+if (currentPressure >= (targetPressure + 150))
     {
-      if(millis() >= time_now + actuatorDisengageDelay)
-        {
-        time_now += actuatorDisengageDelay;     
         BRAKE_PRESSED = true;
-        }
     }
     
 else {
         BRAKE_PRESSED = false;
      }
-    
+
+
 //________________send_OND_CAN-BUS
     
   //0x224 msg BRAKE_MODULE
