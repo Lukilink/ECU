@@ -30,7 +30,7 @@ boolean GAS_RELEASED = false;
 
 void setup() {
 //________________begin Monitor - only use it for debugging
-//Serial.begin(115200);
+Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -117,13 +117,16 @@ else {
  
 //________________logic if gas is pressed by user
  
-if (potiPosition >= (targetPosition + 30))
-    {
-     GAS_RELEASED = false;
-    }
-else {
+//if (potiPosition >= (targetPosition + 50))
+ //   {
+//     GAS_RELEASED = false;
+//     Serial.println("GAS PRESSED");
+//    }
+//else {
      GAS_RELEASED = true;
-     }
+ //    }
+
+
     
 //______________SENDING_CAN_MESSAGES
 
