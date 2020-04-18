@@ -1,3 +1,5 @@
+// MAIN ECU
+
 #include <CAN.h>
 
 //______________BUTTONS AND SWITCHES
@@ -319,6 +321,9 @@ lastGAS_RELEASED = GAS_RELEASED;
         LEAD_LONG_DIST_RAW = (dat_2e6[0] << 8 | dat_2e6[1] << 3); 
         LEAD_REL_SPEED_RAW = (dat_2e6[2] << 8 | dat_2e6[3] << 4);
         }
+  //______________CONVERTING INTO RIGHT VALUE USING DBC SCALE
+  LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
+  LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
   
   //0x224 msg BRAKE_MODULE
     if (CAN.packetId() == 0x224)
@@ -339,7 +344,24 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
-        
+  
+//______________LOGIC FOR LANE CHANGE RECOMENDITION
+if (set_speed >= ((average * 100) + 15))
+   {
+   if (LEAD_REL_SPEED  <= 10)
+      {
+      if (LEAD_LONG_DIST <= 150)
+         {
+         blinker_left = true;
+         }
+      }
+   }
+  
+else
+  {
+  blinker_left = false;
+  }
+  
 }
 
 void rpm() {
