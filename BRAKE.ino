@@ -135,7 +135,7 @@ else {
 
 //________________logic to read if brake is pressed by human
     
-if (currentPressure >= (targetPressure + 20))
+if (currentPressure >= (targetPressure + 40))
     {
         BRAKE_PRESSED = true;
     }
