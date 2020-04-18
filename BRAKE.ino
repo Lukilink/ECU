@@ -13,12 +13,12 @@ int maxPressure = 430; // the max pressure your actuator is able to aply
 int minPressure = 75; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
+int actuatorDisengageDelay = 50; //time to disengage in ms
 
 //________________define_pins
 int cancel_pin = 3;
 int pressurePin = A2;
 int breaklightPin = A5;
-
 int M_DIR = 8; // LOW is Left / HIGH is Right
 int M_PWM = 9; // 255 is run / LOW is stopp
 int S_DIR = 7; // LOW is Left / HIGH is Right
@@ -27,12 +27,12 @@ int S_PWM = 6; // 255 is run / LOW is stopp
 //________________values
 int targetPressure = 0;
 int currentPressure;
-
 float ACC_CMD_PERCENT = 0;
 float ACC_CMD = 0;
 float ACC_CMD1 = 0;
 boolean cancel = false;
 boolean BRAKE_PRESSED = true;
+unsigned long time_now = 0;
 
 
 void setup() {
@@ -137,7 +137,11 @@ else {
     
 if (currentPressure >= (targetPressure + 40))
     {
+      if(millis() >= time_now + actuatorDisengageDelay)
+        {
+        time_now += actuatorDisengageDelay;     
         BRAKE_PRESSED = true;
+        }
     }
     
 else {
