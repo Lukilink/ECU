@@ -348,20 +348,19 @@ lastGAS_RELEASED = GAS_RELEASED;
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
 if (set_speed >= ((average * 100) + 15))
    {
-   if (LEAD_REL_SPEED  <= 10)
+   if (LEAD_REL_SPEED  <= 15)
       {
-      if (LEAD_LONG_DIST <= 150)
-         {
-         blinker_left = true;
+      if (LEAD_LONG_DIST <= 100)
+         {    
+         blinker_left = false;
          }
       }
    }
   
-else
-  {
-  blinker_left = false;
-  }
-  
+
+
+Serial.println(blinker_left);
+
 }
 
 void rpm() {
