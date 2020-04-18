@@ -117,14 +117,14 @@ else {
  
 //________________logic if gas is pressed by user
  
-//if (potiPosition >= (targetPosition + 50))
- //   {
-//     GAS_RELEASED = false;
-//     Serial.println("GAS PRESSED");
-//    }
-//else {
+if (potiPosition >= (targetPosition + 80))
+   {
+     GAS_RELEASED = false;
+     Serial.println("GAS PRESSED");
+    }
+else {
      GAS_RELEASED = true;
- //    }
+     }
 
 
     
