@@ -85,15 +85,15 @@ if (ACC_CMD_PERCENT == 0){
    analogWrite(M_PWM, 0);  //stop Motor
 }
 
-//________________do nothing while cancel, but read if it's still cancel
-  while (!cancel) {
+//________________do nothing if cancel
+  If (cancel = false) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
-  cancel = (digitalRead(cancel_pin));
  }
    
-//________________close solenoid
-   digitalWrite(S_PWM, HIGH);
+else {
+  analogWrite(S_PWM, 255);
+    }
 
 //________________press or release the pedal to match targetPosition & respect endpoints
 if (abs(potiPosition - targetPosition) >= PERM_ERROR)
