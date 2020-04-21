@@ -1,6 +1,8 @@
 // MAIN ECU
 
 #include <CAN.h>
+#include<SoftwareSerial.h>
+SoftwareSerial sygic(4,5);
 
 //______________BUTTONS AND SWITCHES
 int button4 = 8;
@@ -34,6 +36,9 @@ float LEAD_REL_SPEED_RAW = 0;
 boolean BRAKE_PRESSED = true;
 boolean GAS_RELEASED = false;
 
+//______________FOR SYGIC
+int sygicSpeed;
+int lastSygicSpeed;
 
 //______________FOR SMOOTHING SPD
 const int numReadings = 160;
@@ -54,6 +59,7 @@ uint8_t encoder = 0;
 void setup() {
   
 Serial.begin(115200);
+sygic.begin(115200);
 CAN.begin(500E3);
 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -101,7 +107,23 @@ if (half_revolutions >= 1) {
   // calculate the average:
   average = total / numReadings;
   // send it to the computer as ASCII digits
-
+  
+//______________READING SYGIC SPEED
+if (sygic.available())
+ {
+ sygicSpeed = sygic.parseInt();
+ }
+  
+//______________SET SPEED IS SYGIC SPEED
+  if (sygicSpeed != lastSygicSpeed)
+     {
+      if (sygicSpeed > 0)
+         {
+          set_speed = sygicSpeed; 
+         }
+     }
+lastSygicSpeed = sygicSpeed;
+  
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
 buttonstate4 = digitalRead(button4);
@@ -110,7 +132,6 @@ buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
 //______________SET OP OFF WHEN BRAKE IS PRESSED
-
 if (BRAKE_PRESSED != lastBRAKE_PRESSED)
     {
        if (BRAKE_PRESSED == true)
@@ -140,7 +161,14 @@ if (buttonstate4 != lastbuttonstate4)
           else if(OP_ON == false)
           {
           OP_ON = true;
-          set_speed = (average += 3);
+          if (sygicSpeed > 0)
+             {
+             set_speed = sygicSpeed;
+             }
+          else
+             {  
+             set_speed = (average += 3);
+             }
           }
         }
      }
@@ -180,7 +208,7 @@ if (buttonstate1 == LOW)
    blinker_left = true;
    }
    
-//______________SET CLUTCH
+//______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
   //  Serial.println("Clutch Pedal is pressed");
