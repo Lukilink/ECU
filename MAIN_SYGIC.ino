@@ -58,7 +58,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-Serial.begin(115200);
+// Serial.begin(115200);
 sygic.begin(115200);
 CAN.begin(500E3);
 
@@ -109,20 +109,21 @@ if (half_revolutions >= 1) {
   // send it to the computer as ASCII digits
   
 //______________READING SYGIC SPEED
+
 if (sygic.available())
- {
- sygicSpeed = sygic.parseInt();
- }
+   {
+   sygicSpeed == sygic.parseInt();
+   }
   
 //______________SET SPEED IS SYGIC SPEED
-  if (sygicSpeed != lastSygicSpeed)
-     {
-      if (sygicSpeed > 0)
-         {
-          set_speed = sygicSpeed; 
-         }
-     }
-lastSygicSpeed = sygicSpeed;
+if (sygicSpeed != lastSygicSpeed)
+   {
+   lastSygicSpeed = sygicSpeed;
+   if (sygicSpeed > 0)
+      {
+      set_speed = sygicSpeed; 
+      }
+   }
   
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
@@ -155,7 +156,7 @@ if (buttonstate4 != lastbuttonstate4)
        {
           if (OP_ON == true)
           {
-          set_speed = set_speed + 5;
+          set_speed += 5;
           }
           else if(OP_ON == false)
           {
@@ -166,7 +167,7 @@ if (buttonstate4 != lastbuttonstate4)
              }
           else
              {  
-             set_speed = (average += 3);
+             set_speed = (average += 2);
              }
           }
         }
@@ -210,7 +211,7 @@ if (buttonstate1 == LOW)
 //______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
-  //  Serial.println("Clutch Pedal is pressed");
+  //  ("Clutch Pedal is pressed");
    }
 
 lastbuttonstate1 = buttonstate1;
