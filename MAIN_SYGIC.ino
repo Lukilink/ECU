@@ -112,7 +112,10 @@ if (half_revolutions >= 1) {
 
 if (sygic.available())
    {
-   sygicSpeed == sygic.parseInt();
+   while (sygic.available()>0)
+         {
+          sygicSpeed = sygic.parseInt();
+         }
    }
   
 //______________SET SPEED IS SYGIC SPEED
