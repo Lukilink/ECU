@@ -148,7 +148,6 @@ if (GAS_RELEASED != lastGAS_RELEASED)
        OP_ON = false;
        }
     }
-
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
@@ -384,11 +383,6 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
-  
-
-
-Serial.println(blinker_left);
-
 }
 
 void rpm() {
