@@ -53,7 +53,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-Serial.begin(115200);
+//Serial.begin(115200);
 CAN.begin(500E3);
 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -356,11 +356,6 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
-  
-
-
-Serial.println(blinker_left);
-
 }
 
 void rpm() {
