@@ -39,6 +39,8 @@ boolean GAS_RELEASED = false;
 //______________FOR SYGIC
 int sygicSpeed;
 int lastSygicSpeed;
+String inString = "";
+
 
 //______________FOR SMOOTHING SPD
 const int numReadings = 160;
@@ -110,13 +112,19 @@ if (half_revolutions >= 1) {
   
 //______________READING SYGIC SPEED
 
-if (sygic.available())
-   {
-   while (sygic.available()>0)
-         {
-          sygicSpeed = sygic.parseInt();
-         }
-   }
+  while (sygic.available() > 0) {
+    int inChar = sygic.read();
+    if (isDigit(inChar)) {
+      // convert the incoming byte to a char and add it to the string:
+      inString += (char)inChar;
+    }
+    // if you get a newline, print the string, then the string's value:
+    if (inChar == '\n') {
+      sygicSpeed = (inString.toInt());
+      // clear the string for new input:
+      inString = "";
+    }
+  }
   
 //______________SET SPEED IS SYGIC SPEED
 if (sygicSpeed != lastSygicSpeed)
