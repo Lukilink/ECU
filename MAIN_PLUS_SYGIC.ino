@@ -160,14 +160,7 @@ if (buttonstate4 != lastbuttonstate4)
           else if(OP_ON == false)
           {
           OP_ON = true;
-          if (sygicSpeed > 0)
-             {
-             set_speed = sygicSpeed;
-             }
-          else
-             {  
              set_speed = (average += 2);
-             }
           }
         }
      }
