@@ -37,8 +37,6 @@ boolean BRAKE_PRESSED = true;
 boolean GAS_RELEASED = false;
 
 //______________FOR SYGIC
-int sygicSpeed;
-int lastSygicSpeed;
 String inString = "";
 
 
@@ -110,7 +108,7 @@ if (half_revolutions >= 1) {
   average = total / numReadings;
   // send it to the computer as ASCII digits
   
-//______________READING SYGIC SPEED
+//______________READING SYGIC SPEED AND SET TO SET_SPEED IF AVAILABLE
 
   while (sygic.available() > 0) {
     int inChar = sygic.read();
@@ -120,21 +118,11 @@ if (half_revolutions >= 1) {
     }
     // if you get a newline, print the string, then the string's value:
     if (inChar == '\n') {
-      sygicSpeed = (inString.toInt());
+      set_speed = (inString.toInt());
       // clear the string for new input:
       inString = "";
     }
   }
-  
-//______________SET SPEED IS SYGIC SPEED
-if (sygicSpeed != lastSygicSpeed)
-   {
-   lastSygicSpeed = sygicSpeed;
-   if (sygicSpeed > 0)
-      {
-      set_speed = sygicSpeed; 
-      }
-   }
   
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
