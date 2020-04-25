@@ -38,6 +38,7 @@ boolean GAS_RELEASED = false;
 
 //______________FOR SYGIC
 String inString = "";
+int sygic_speed;
 
 
 //______________FOR SMOOTHING SPD
@@ -58,7 +59,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-// Serial.begin(115200);
+Serial.begin(115200);
 sygic.begin(115200);
 CAN.begin(500E3);
 
@@ -109,7 +110,7 @@ if (half_revolutions >= 1) {
   // send it to the computer as ASCII digits
   
 //______________READING SYGIC SPEED AND SET TO SET_SPEED IF AVAILABLE
-
+if (sygic.available() > 0){
   while (sygic.available() > 0) {
     int inChar = sygic.read();
     if (isDigit(inChar)) {
@@ -118,12 +119,18 @@ if (half_revolutions >= 1) {
     }
     // if you get a newline, print the string, then the string's value:
     if (inChar == '\n') {
-      set_speed = (inString.toInt());
+     int sygic_speedRAW = (inString.toInt());
+      Serial.println(sygic_speedRAW);
+      if (sygic_speedRAW > 0){
+      sygic_speed = sygic_speedRAW;
+      set_speed = sygic_speed;
+      }
       // clear the string for new input:
       inString = "";
     }
   }
-  
+}
+ 
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
 buttonstate4 = digitalRead(button4);
@@ -160,7 +167,7 @@ if (buttonstate4 != lastbuttonstate4)
           else if(OP_ON == false)
           {
           OP_ON = true;
-             set_speed = (average += 2);
+          set_speed = (average =+3);
           }
         }
      }
