@@ -80,7 +80,9 @@ else
         dat[ii]  = (char) CAN.read();
         }
         ACC_CMD = ((dat[0] << 8 | dat[1] << 0) * -1); 
-        }    
+        }
+
+    
 
 //________________calculating ACC_CMD into ACC_CMD_PERCENT
 if (ACC_CMD >= minACC_CMD) {
@@ -133,7 +135,7 @@ else {
 
 //________________logic to read if brake is pressed by human
     
-if (currentPressure >= (targetPressure + 200))
+if (currentPressure >= (minPressure + 10))
     {
         BRAKE_PRESSED = true;
     }
@@ -143,23 +145,23 @@ else {
      }
 
 
-//________________send_OND_CAN-BUS
+//________________send_ON_CAN-BUS
     
-  //0x224 msg BRAKE_MODULE
-  uint8_t dat_224[8];
-  dat_224[0] = (BRAKE_PRESSED << 5) & 0x20;
-  dat_224[1] = 0x0;
-  dat_224[2] = 0x0;
-  dat_224[3] = 0x0;
-  dat_224[4] = 0x0;
-  dat_224[5] = 0x0;
-  dat_224[6] = 0x0;
-  dat_224[7] = 0x8;
-  CAN.beginPacket(0x224);
+  // 0x2c2 msg ecu communication 
+  uint8_t dat_2c2[8];
+  dat_2c2[0] = 0x0;
+  dat_2c2[1] = (BRAKE_PRESSED<< 3) & 0x08;
+  dat_2c2[2] = 0x0;
+  dat_2c2[3] = 0x0;
+  dat_2c2[4] = 0x0;
+  dat_2c2[5] = 0x0;
+  dat_2c2[6] = 0x0;
+  dat_2c2[7] = 0x0;
+  CAN.beginPacket(0x2c2);
   for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_224[ii]);
+    CAN.write(dat_2c2[ii]);
   }
-  CAN.endPacket();    
+  CAN.endPacket();
     
 //________________print stuff if you want to DEBUG
 
