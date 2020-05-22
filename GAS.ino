@@ -148,7 +148,7 @@ else {
 
   // 0x2c2 msg ecu communication 
   uint8_t dat_2c2[8];
-  dat_2c2[0] = (GAS_RELEASED << 3) & 0x08;
+  dat_2c2[0] = (GAS_PRESSED << 3) & 0x08;
   dat_2c2[1] = 0x0;
   dat_2c2[2] = 0x0;
   dat_2c2[3] = 0x0;
