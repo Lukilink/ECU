@@ -26,8 +26,8 @@ float ACC_CMD_PERCENT = 0;
 float ACC_CMD = 0;
 float ACC_CMD1 = 0;
 boolean cancel = false;
-boolean GAS_PRESSED = false;
-boolean BRAKE_PRESSED = false;
+boolean GAS_PRESSED = true;
+boolean BRAKE_PRESSED = true;
 
 void setup() {
 //________________begin Monitor - only use it for debugging
@@ -96,13 +96,13 @@ if (ACC_CMD_PERCENT == 0){
 }
 
 //________________do nothing if cancel
-  If (cancel = false) {
+  if (!=cancel) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
  }
 
 //________________do nothing if BRAKE_PRESSED
-  If (BRAKE_PRESSED = true) {
+  if (BRAKE_PRESSED = true) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
  }
