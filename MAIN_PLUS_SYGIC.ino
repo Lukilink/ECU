@@ -175,15 +175,14 @@ if (buttonstate2 == LOW)
    }
 
 //______________SET BUTTON NR1
-if (buttonstate1 == LOW)
-  {
-   blinker_left = false;
-   }
-  else
-   {
-   blinker_left = true;
-   }
-   
+
+if (buttonstate1 != lastbuttonstate1)
+    {
+     if (buttonstate1 == LOW)
+         {
+          OP_ON = false;
+         }
+    }
 //______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
