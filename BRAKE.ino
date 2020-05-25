@@ -31,7 +31,6 @@ float ACC_CMD = 0;
 float ACC_CMD1 = 0;
 boolean cancel = false;
 boolean BRAKE_PRESSED = true;
-boolean GAS_PRESSED = true;
 
 
 void setup() {
@@ -83,14 +82,6 @@ else
         ACC_CMD = ((dat[0] << 8 | dat[1] << 0) * -1); 
         }
 
- if (CAN.packetId() == 0x2c2)
-      {
-      uint8_t 2c2[8];
-      for (int ii = 0; ii <= 7; ii++) {
-        2c2[ii]  = (char) CAN.read();
-        }
-        GAS_PRESSED = (2c2[0] << 3); 
-        } 
     
 
 //________________calculating ACC_CMD into ACC_CMD_PERCENT
@@ -112,21 +103,15 @@ if (ACC_CMD_PERCENT == 0){
    analogWrite(M_PWM, 0);  //stop Motor
 }
 
-//________________do nothing IF CANCEL
-if (!cancel) {
+//________________do nothing while cancel, but read if it's still cancel
+while (!cancel) {
    analogWrite(S_PWM, 0);  //open solenoid
    analogWrite(M_PWM, 0);  //stop Motor
+   cancel = (digitalRead(cancel_pin));
    }
 
-//________________do nothing if GAS_PRESSED
-if (GAS_PRESSED = true) {
-   analogWrite(S_PWM, 0);  //open solenoid
-   analogWrite(M_PWM, 0);  //stop Motor
-   }
-
-else {
-   analogWrite(S_PWM, 255);
-   }
+//________________close solenoid
+analogWrite(S_PWM, 255);
    
 //________________press or release the pedal to match targetPressure & respect endpoints
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
