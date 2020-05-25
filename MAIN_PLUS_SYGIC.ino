@@ -19,6 +19,8 @@ int buttonstate2;
 int lastbuttonstate2;
 int buttonstate1;
 int lastbuttonstate1;
+boolean lastGAS_RELEASED = false;
+boolean lastBRAKE_PRESSED = false;
 
 //______________VALUES SEND ON CAN
 boolean OP_ON = false;
@@ -31,10 +33,13 @@ float LEAD_LONG_DIST = 0;
 float LEAD_REL_SPEED = 0;
 float LEAD_LONG_DIST_RAW = 0;
 float LEAD_REL_SPEED_RAW = 0;
+boolean BRAKE_PRESSED = true;
+boolean GAS_RELEASED = false;
 
 //______________FOR SYGIC
 String inString = "";
 int sygic_speed;
+
 
 //______________FOR SMOOTHING SPD
 const int numReadings = 160;
@@ -50,6 +55,7 @@ int spd;
 unsigned long lastmillis;
 unsigned long duration;
 uint8_t encoder = 0;
+
 
 void setup() {
   
@@ -132,6 +138,23 @@ buttonstate3 = digitalRead(button3);
 buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
+//______________SET OP OFF WHEN BRAKE IS PRESSED
+if (BRAKE_PRESSED != lastBRAKE_PRESSED)
+    {
+       if (BRAKE_PRESSED == true)
+       {
+       OP_ON = false;
+       }
+    }
+    
+//______________SET OP OFF WHEN GAS IS PRESSED
+if (GAS_RELEASED != lastGAS_RELEASED)
+    {
+       if (GAS_RELEASED == false)
+       {
+       OP_ON = false;
+       }
+    }
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
@@ -175,14 +198,15 @@ if (buttonstate2 == LOW)
    }
 
 //______________SET BUTTON NR1
-
-if (buttonstate1 != lastbuttonstate1)
-    {
-     if (buttonstate1 == LOW)
-         {
-          OP_ON = false;
-         }
-    }
+if (buttonstate1 == LOW)
+  {
+   blinker_left = false;
+   }
+  else
+   {
+   blinker_left = true;
+   }
+   
 //______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
@@ -193,6 +217,8 @@ lastbuttonstate1 = buttonstate1;
 lastbuttonstate2 = buttonstate2;
 lastbuttonstate3 = buttonstate3;
 lastbuttonstate4 = buttonstate4;
+lastBRAKE_PRESSED = BRAKE_PRESSED;
+lastGAS_RELEASED = GAS_RELEASED;
 
 //______________SENDING_CAN_MESSAGES
 
