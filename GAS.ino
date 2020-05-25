@@ -26,8 +26,7 @@ float ACC_CMD_PERCENT = 0;
 float ACC_CMD = 0;
 float ACC_CMD1 = 0;
 boolean cancel = false;
-boolean GAS_PRESSED = true;
-boolean BRAKE_PRESSED = true;
+boolean GAS_RELEASED = false;
 
 void setup() {
 //________________begin Monitor - only use it for debugging
@@ -66,15 +65,6 @@ int potiPosition = (analogRead(potPin));
         ACC_CMD = (dat[0] << 8 | dat[1] << 0); 
        } 
 
-if (CAN.packetId() == 0x2c2)
-      {
-      uint8_t 2c2[8];
-      for (int ii = 0; ii <= 7; ii++) {
-        2c2[ii]  = (char) CAN.read();
-        }
-        BRAKE_PRESSED = (2c2[1] << 3); 
-        } 
-
 //________________calculating ACC_CMD into ACC_CMD_PERCENT
 if (ACC_CMD >= minACC_CMD) {
     ACC_CMD1 = ACC_CMD;
@@ -96,13 +86,7 @@ if (ACC_CMD_PERCENT == 0){
 }
 
 //________________do nothing if cancel
-  if (!=cancel) {
-  analogWrite(S_PWM, 0);  //open solenoid
-  analogWrite(M_PWM, 0);  //stop Motor
- }
-
-//________________do nothing if BRAKE_PRESSED
-  if (BRAKE_PRESSED = true) {
+  If (cancel = false) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
  }
@@ -133,32 +117,32 @@ else {
  
 //________________logic if gas is pressed by user
  
-if (potiPosition >= (minPot + 10))
+if (potiPosition >= (targetPosition + 150))
    {
-     GAS_PRESSED = true;
+     GAS_RELEASED = false;
      Serial.println("GAS PRESSED");
     }
 else {
-     GAS_PRESSED = false;
+     GAS_RELEASED = true;
      }
 
 
     
 //______________SENDING_CAN_MESSAGES
 
-  // 0x2c2 msg ecu communication 
-  uint8_t dat_2c2[8];
-  dat_2c2[0] = (GAS_PRESSED << 3) & 0x08;
-  dat_2c2[1] = 0x0;
-  dat_2c2[2] = 0x0;
-  dat_2c2[3] = 0x0;
-  dat_2c2[4] = 0x0;
-  dat_2c2[5] = 0x0;
-  dat_2c2[6] = 0x0;
-  dat_2c2[7] = 0x0;
-  CAN.beginPacket(0x2c2);
+  // 0x2c1 msg GAS_PEDAL
+  uint8_t dat_2c1[8];
+  dat_2c1[0] = (GAS_RELEASED << 3) & 0x08;
+  dat_2c1[1] = 0x0;
+  dat_2c1[2] = 0x0;
+  dat_2c1[3] = 0x0;
+  dat_2c1[4] = 0x0;
+  dat_2c1[5] = 0x0;
+  dat_2c1[6] = 0x0;
+  dat_2c1[7] = 0x0;
+  CAN.beginPacket(0x2c1);
   for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_2c2[ii]);
+    CAN.write(dat_2c1[ii]);
   }
   CAN.endPacket();
      
