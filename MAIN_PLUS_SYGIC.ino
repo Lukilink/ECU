@@ -167,7 +167,7 @@ if (buttonstate4 != lastbuttonstate4)
           else if(OP_ON == false)
           {
           OP_ON = true;
-          set_speed = (average =+3);
+          set_speed = (average + 3);
           }
         }
      }
