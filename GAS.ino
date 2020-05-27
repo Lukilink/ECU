@@ -34,6 +34,9 @@ Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
+CAN.filter(0x200);
+CAN.filter(0x2c1);
+
 
 //________________set up pin modes
 pinMode(cancel_pin, INPUT_PULLUP);
