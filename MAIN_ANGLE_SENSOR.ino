@@ -4,6 +4,21 @@
 #include<SoftwareSerial.h>
 SoftwareSerial sygic(4,5);
 
+//______________FOR STEERING ANGLE SENSOR
+#include <SPI.h>
+#include <WiFiNINA.h>
+#include <WiFiUdp.h>
+
+int status = WL_IDLE_STATUS;
+char ssid[] = "ANGLESENSOR";
+char pass[] = "90346904906149662937";
+int keyIndex = 0;
+unsigned int localPort = 2390;  // local port to listen on 
+char packetBuffer[256]; //buffer to hold incoming packet
+float steering_angle;
+long previousMillis;
+WiFiUDP Udp;
+
 //______________BUTTONS AND SWITCHES
 int button4 = 8;
 int button3 = 7;
@@ -63,6 +78,20 @@ Serial.begin(115200);
 sygic.begin(115200);
 CAN.begin(500E3);
 
+//______________FOR STEERING ANGLE SENSOR
+WiFi.config(IPAddress(192, 168, 4, 2));
+
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
+    delay(100);
+  }
+  Serial.println("Connected to wifi");
+  printWifiStatus();
+  Serial.println("\nWaiting for messages...");
+  Udp.begin(localPort);
+
 pinMode(interruptPin, INPUT_PULLUP);
 attachInterrupt(digitalPinToInterrupt(interruptPin), rpm, FALLING);
 pinMode(button1, INPUT);
@@ -77,6 +106,18 @@ pinMode(button4, INPUT);
 }
 
 void loop() {
+  
+//______________READ STEERING ANGLE SENSOR FROM UDP STREAM
+int packetSize = Udp.parsePacket();
+  if (packetSize) {
+    int len = Udp.read(packetBuffer, 255);
+    if (len > 0) {
+      packetBuffer[len] = 0;
+    }
+    steering_angle = atof(packetBuffer);
+  }
+Serial.println(steering_angle);
+  
   
 //______________READ SPD SENSOR
 attachInterrupt(1,rpm, FALLING);
@@ -158,13 +199,13 @@ if (GAS_RELEASED != lastGAS_RELEASED)
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
-       if (buttonstate4 == LOW)
+       if (buttonstate4 = LOW)
        {
-          if (OP_ON == true)
+          if (OP_ON = true)
           {
           set_speed += 5;
           }
-          else if(OP_ON == false)
+          else if(OP_ON = false)
           {
           OP_ON = true;
           set_speed = (average + 3);
@@ -188,15 +229,13 @@ if (set_speed > 200)
     }
     
 //______________SET BUTTON NR2
-if (buttonstate2 == LOW)
-   {
-   blinker_right = false;
-   }
-  else
-   {
-   blinker_right = true;
-   }
-
+if (buttonstate2 != lastbuttonstate2)
+    {
+       if (buttonstate2 == LOW)
+       {
+       OP_ON = false;
+       }
+    }
 //______________SET BUTTON NR1
 if (buttonstate1 == LOW)
   {
@@ -335,9 +374,26 @@ lastGAS_RELEASED = GAS_RELEASED;
   }
   CAN.endPacket();
 
+    //0x26 msg wifi_steering_angle_sensor
+  uint8_t dat_26[8];
+  uint16_t steer_angle = steering_angle
+  dat_26[0] = (steer_angle << 3) & 0xF;
+  dat_26[1] = (steer_angle >> 0) & 0xFF;
+  dat_26[2] = 0x0;
+  dat_26[3] = 0x0;
+  dat_26[4] = 0x0;
+  dat_26[5] = 0x0;
+  dat_26[6] = 0x0;
+  dat_26[7] = can_cksum(dat_26, 7, 0x26);
+  CAN.beginPacket(0x26);
+  for (int ii = 0; ii < 8; ii++) {
+    CAN.write(dat_26[ii]);
+  }
+  CAN.endPacket();
+
 //______________READING CAN
   CAN.parsePacket();
-
+/*
   //128x2e6 msg LEAD_INFO
   if (CAN.packetId() == 0x2e6)
       {
@@ -351,7 +407,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   //______________CONVERTING INTO RIGHT VALUE USING DBC SCALE
   LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
   LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
-  
+*/  
   //0x224 msg BRAKE_MODULE
     if (CAN.packetId() == 0x224)
       {
@@ -371,7 +427,7 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
-  
+/*  
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
 if (set_speed >= ((average * 100) + 15))
    {
@@ -383,6 +439,7 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
+*/   
 }
 
 void rpm() {
@@ -403,4 +460,21 @@ int can_cksum (uint8_t *dat, uint8_t len, uint16_t addr) {
     checksum += (dat[ii]);
   }
   return checksum;
+}
+
+void printWifiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your board's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
 }
