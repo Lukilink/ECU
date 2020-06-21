@@ -7,10 +7,8 @@
 
 //________________this values needs to be define for each car
 int PERM_ERROR = 4; // will allow a diffrence between targetPressure and currentPressure
-int minPot = 1; //measured at actuators lowest position
-int maxPot = 1000; //measured at actuators highest position
-int maxPressure = 430; // the max pressure your actuator is able to aply
-int minPressure = 75; //the pressure in stand still
+int maxPressure = 130; // the max pressure your actuator is able to aply
+int minPressure = 84; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
 
@@ -36,7 +34,7 @@ boolean BRAKE_PRESSED = true;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
- Serial.begin(115200);
+// Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -59,8 +57,6 @@ cancel = true; //(digitalRead(cancel_pin));
 
 //________________read pressure sensor
 currentPressure = (analogRead(pressurePin));
-
-Serial.println(currentPressure);
 
 //________________light up break lights
 if (currentPressure >= 75)
@@ -137,9 +133,10 @@ else {
 
 //________________logic to read if brake is pressed by human
     
-if (currentPressure >= (minPressure + 10))
+if (currentPressure >= (targetPressure + 25))
     {
         BRAKE_PRESSED = true;
+        Serial.println("PRESSED");
     }
     
 else {
