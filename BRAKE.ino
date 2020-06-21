@@ -34,7 +34,7 @@ boolean BRAKE_PRESSED = true;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
-// Serial.begin(115200);
+ Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -136,7 +136,6 @@ else {
 if (currentPressure >= (targetPressure + 25))
     {
         BRAKE_PRESSED = true;
-        Serial.println("PRESSED");
     }
     
 else {
@@ -144,21 +143,20 @@ else {
      }
 
 
-//________________send_ON_CAN-BUS
-    
-  // 0x2c2 msg ecu communication 
-  uint8_t dat_2c2[8];
-  dat_2c2[0] = 0x0;
-  dat_2c2[1] = (BRAKE_PRESSED<< 3) & 0x08;
-  dat_2c2[2] = 0x0;
-  dat_2c2[3] = 0x0;
-  dat_2c2[4] = 0x0;
-  dat_2c2[5] = 0x0;
-  dat_2c2[6] = 0x0;
-  dat_2c2[7] = 0x0;
-  CAN.beginPacket(0x2c2);
+//________________send_ON_CAN-BUS 
+  // 0x224 BRAKE_MODULE
+  uint8_t dat_224[8];
+  dat_224[0] = 0x0;
+  dat_224[1] = (BRAKE_PRESSED<< 3) & 0x08;
+  dat_224[2] = 0x0;
+  dat_224[3] = 0x0;
+  dat_224[4] = 0x0;
+  dat_224[5] = 0x0;
+  dat_224[6] = 0x0;
+  dat_224[7] = 0x0;
+  CAN.beginPacket(dat_224);
   for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_2c2[ii]);
+    CAN.write(dat_224[ii]);
   }
   CAN.endPacket();
     
