@@ -59,7 +59,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-Serial.begin(115200);
+//Serial.begin(115200);
 sygic.begin(115200);
 CAN.begin(500E3);
 
@@ -120,7 +120,7 @@ if (sygic.available() > 0){
     // if you get a newline, print the string, then the string's value:
     if (inChar == '\n') {
      int sygic_speedRAW = (inString.toInt());
-      Serial.println(sygic_speedRAW);
+     // Serial.println(sygic_speedRAW);
       if (sygic_speedRAW > 0){
       sygic_speed = sygic_speedRAW;
       set_speed = sygic_speed;
@@ -138,23 +138,20 @@ buttonstate3 = digitalRead(button3);
 buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
+
 //______________SET OP OFF WHEN BRAKE IS PRESSED
-if (BRAKE_PRESSED != lastBRAKE_PRESSED)
-    {
+
        if (BRAKE_PRESSED == true)
        {
        OP_ON = false;
        }
-    }
+ 
     
 //______________SET OP OFF WHEN GAS IS PRESSED
-if (GAS_RELEASED != lastGAS_RELEASED)
-    {
        if (GAS_RELEASED == false)
        {
        OP_ON = false;
        }
-    }
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
@@ -162,9 +159,9 @@ if (buttonstate4 != lastbuttonstate4)
        {
           if (OP_ON == true)
           {
-          set_speed += 5;
+          OP_ON = false;
           }
-          else if(OP_ON == false)
+          else
           {
           OP_ON = true;
           set_speed = (average + 3);
@@ -177,9 +174,18 @@ if (buttonstate3 != lastbuttonstate3)
     {
        if (buttonstate3 == LOW)
        {
+       set_speed = set_speed + 5;
+       }
+    }
+//______________SET BUTTON NR2
+if (buttonstate2 != lastbuttonstate2)
+   {
+       if (buttonstate2 == LOW)
+       {
        set_speed = set_speed - 5;
        }
     }
+
     
 //______________LIMIT FOR SETSPEED
 if (set_speed > 200)
@@ -187,26 +193,16 @@ if (set_speed > 200)
       set_speed = 0;
     }
     
-//______________SET BUTTON NR2
-if (buttonstate2 == LOW)
-   {
-   blinker_right = false;
-   }
-  else
-   {
-   blinker_right = true;
-   }
 
 //______________SET BUTTON NR1
-if (buttonstate1 == LOW)
-  {
-   blinker_left = false;
-   }
-  else
+if (buttonstate1 != lastbuttonstate1)
    {
-   blinker_left = true;
+       if (buttonstate1 == LOW)
+       {
+       OP_ON = false;
+       }
    }
-   
+
 //______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
@@ -270,7 +266,7 @@ lastGAS_RELEASED = GAS_RELEASED;
     CAN.write(dat_aa[ii]);
   }
   CAN.endPacket();
-
+/*
   //0x3b7 msg ESP_CONTROL
   uint8_t dat_3b7[8];
   dat_3b7[0] = 0x0;
@@ -287,6 +283,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   }
   CAN.endPacket();
 
+*/
   //0x620 msg STEATS_DOORS
   uint8_t dat_620[8];
   dat_620[0] = 0x10;
@@ -351,16 +348,18 @@ lastGAS_RELEASED = GAS_RELEASED;
   //______________CONVERTING INTO RIGHT VALUE USING DBC SCALE
   LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
   LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
+
   
-  //0x224 msg BRAKE_MODULE
-    if (CAN.packetId() == 0x224)
+  //0x224 msg BRAKE_MODULE --- WE are using the 0x3b7 message, which is ESP_CONTROL to reduce traffic on the can network
+    if (CAN.packetId() == 0x3b7)
       {
-      uint8_t dat_224[8];
+      uint8_t dat_3b7[8];
       for (int ii = 0; ii <= 7; ii++) {
-        dat_224[ii]  = (char) CAN.read();
+        dat_3b7[ii]  = (char) CAN.read();
         }
-        BRAKE_PRESSED = (dat_224[0] << 5);
+        BRAKE_PRESSED = (dat_3b7[0] << 5);
         }
+
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
@@ -370,6 +369,7 @@ lastGAS_RELEASED = GAS_RELEASED;
         dat_2c1[ii]  = (char) CAN.read();
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
+        BRAKE_PRESSED = (dat_2c1[1] << 3);
         }
   
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
@@ -383,6 +383,7 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
+
 }
 
 void rpm() {
