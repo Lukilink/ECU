@@ -142,24 +142,25 @@ else {
         BRAKE_PRESSED = false;
      }
 
+Serial.println(BRAKE_PRESSED);
 
 //________________send_ON_CAN-BUS 
-  // 0x224 BRAKE_MODULE
-  uint8_t dat_224[8];
-  dat_224[0] = 0x0;
-  dat_224[1] = (BRAKE_PRESSED<< 3) & 0x08;
-  dat_224[2] = 0x0;
-  dat_224[3] = 0x0;
-  dat_224[4] = 0x0;
-  dat_224[5] = 0x0;
-  dat_224[6] = 0x0;
-  dat_224[7] = 0x0;
-  CAN.beginPacket(dat_224);
+//0x3b7 msg ESP_CONTROL
+  uint8_t dat_3b7[8];
+  dat_3b7[0] = (BRAKE_PRESSED << 5) & 0x20;
+  dat_3b7[1] = 0x0;
+  dat_3b7[2] = 0x0;
+  dat_3b7[3] = 0x0;
+  dat_3b7[4] = 0x0;
+  dat_3b7[5] = 0x0;
+  dat_3b7[6] = 0x0;
+  dat_3b7[7] = 0x08;
+  CAN.beginPacket(0x3b7);
   for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_224[ii]);
+    CAN.write(dat_3b7[ii]);
   }
   CAN.endPacket();
-    
+
 //________________print stuff if you want to DEBUG
 
 //Serial.print("ACC_CMD_");
