@@ -36,7 +36,7 @@ boolean BRAKE_PRESSED = true;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
-// Serial.begin(115200);
+ Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -59,6 +59,8 @@ cancel = true; //(digitalRead(cancel_pin));
 
 //________________read pressure sensor
 currentPressure = (analogRead(pressurePin));
+
+Serial.println(currentPressure);
 
 //________________light up break lights
 if (currentPressure >= 75)
