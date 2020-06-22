@@ -77,14 +77,23 @@ void myTimerEvent()
 {
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
-  Blynk.virtualWrite(V0, LEAD_REL_SPEED / 500);
+  Blynk.virtualWrite(V0, average / 500);
   Blynk.virtualWrite(V1, LEAD_LONG_DIST / 500);
 }
-
+BLYNK_WRITE(V3)
+{
+  int pinValueV3 = param.asInt(); // assigning incoming value from pin V1 to a variable
+  set_speed = pinValueV3;
+}
+BLYNK_WRITE(V2)
+{
+  boolean pinValueV2 = param.asInt(); // assigning incoming value from pin V1 to a variable
+  OP_ON = pinValueV2;
+}
 
 void setup() {
   
-Serial.begin(9600);
+//Serial.begin(9600);
 CAN.begin(500E3);
 Blynk.begin(auth, ssid, pass);
   // You can also specify server:
@@ -154,14 +163,14 @@ buttonstate1 = digitalRead(button1);
 blinker_left = digitalRead(BlinkerPinLeft);
 blinker_right = digitalRead(BlinkerPinRight);
 
-
+/*
 Serial.print("blinker_left");
 Serial.print(blinker_left);
 Serial.print("     ");
 Serial.print("blinker_right");
 Serial.print(blinker_right);
 Serial.println("     ");
-
+*/
 
 //______________SET OP OFF WHEN BRAKE IS PRESSED
 
