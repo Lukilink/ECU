@@ -1,6 +1,17 @@
 // MAIN ECU
 #include <CAN.h>
 
+//______________BLYNK
+/* Comment this out to disable prints and save space */
+//#define BLYNK_PRINT Serial
+
+#include <SPI.h>
+#include <WiFiNINA.h>
+#include <BlynkSimpleWiFiNINA.h>
+char auth[] = "RDyNQX1ZiETyEM_prEITRBL7TRYpYJQn";
+char ssid[] = "Lukephone";
+char pass[] = "123456789";
+
 
 //______________BUTTONS AND SWITCHES
 
@@ -56,10 +67,32 @@ unsigned long duration;
 uint8_t encoder = 0;
 
 
+//______________BLYNK
+BlynkTimer timer;
+
+// This function sends Arduino's up time every second to Virtual Pin (5).
+// In the app, Widget's reading frequency should be set to PUSH. This means
+// that you define how often to send data to Blynk App.
+void myTimerEvent()
+{
+  // You can send any value at any time.
+  // Please don't send more that 10 values per second.
+  Blynk.virtualWrite(V0, LEAD_REL_SPEED / 500);
+  Blynk.virtualWrite(V1, LEAD_LONG_DIST / 500);
+}
+
+
 void setup() {
   
 Serial.begin(9600);
 CAN.begin(500E3);
+Blynk.begin(auth, ssid, pass);
+  // You can also specify server:
+  //Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
+  //Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+  
+timer.setInterval(500L, myTimerEvent);
+  
 
 pinMode(interruptPin, INPUT_PULLUP);
 attachInterrupt(digitalPinToInterrupt(interruptPin), rpm, FALLING);
@@ -373,7 +406,9 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
-
+  
+  Blynk.run();
+  timer.run(); // Initiates BlynkTimer
 }
 
 void rpm() {
