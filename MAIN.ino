@@ -1,8 +1,11 @@
 // MAIN ECU
-
 #include <CAN.h>
 
+
 //______________BUTTONS AND SWITCHES
+
+int BlinkerPinLeft = 4;
+int BlinkerPinRight = 5;
 int button4 = 8;
 int button3 = 7;
 int button2 = 6;
@@ -19,6 +22,8 @@ int buttonstate1;
 int lastbuttonstate1;
 boolean lastGAS_RELEASED = false;
 boolean lastBRAKE_PRESSED = false;
+
+
 
 //______________VALUES SEND ON CAN
 boolean OP_ON = false;
@@ -53,7 +58,7 @@ uint8_t encoder = 0;
 
 void setup() {
   
-//Serial.begin(115200);
+Serial.begin(9600);
 CAN.begin(500E3);
 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -62,6 +67,9 @@ pinMode(button1, INPUT);
 pinMode(button2, INPUT);
 pinMode(button3, INPUT);
 pinMode(button4, INPUT);
+pinMode(BlinkerPinLeft, INPUT_PULLUP);
+pinMode(BlinkerPinRight, INPUT_PULLUP);
+
 
 //______________initialize smoothing inputs
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
@@ -101,7 +109,8 @@ if (half_revolutions >= 1) {
   // calculate the average:
   average = total / numReadings;
   // send it to the computer as ASCII digits
-
+  
+ 
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
 buttonstate4 = digitalRead(button4);
@@ -109,25 +118,31 @@ buttonstate3 = digitalRead(button3);
 buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
+blinker_left = digitalRead(BlinkerPinLeft);
+blinker_right = digitalRead(BlinkerPinRight);
+
+
+Serial.print("blinker_left");
+Serial.print(blinker_left);
+Serial.print("     ");
+Serial.print("blinker_right");
+Serial.print(blinker_right);
+Serial.println("     ");
+
+
 //______________SET OP OFF WHEN BRAKE IS PRESSED
 
-if (BRAKE_PRESSED != lastBRAKE_PRESSED)
-    {
        if (BRAKE_PRESSED == true)
        {
        OP_ON = false;
        }
-    }
+ 
     
 //______________SET OP OFF WHEN GAS IS PRESSED
-if (GAS_RELEASED != lastGAS_RELEASED)
-    {
        if (GAS_RELEASED == false)
        {
        OP_ON = false;
        }
-    }
-
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
@@ -135,12 +150,12 @@ if (buttonstate4 != lastbuttonstate4)
        {
           if (OP_ON == true)
           {
-          set_speed = set_speed + 5;
+          OP_ON = false;
           }
-          else if(OP_ON == false)
+          else
           {
           OP_ON = true;
-          set_speed = (average += 3);
+          set_speed = (average + 3);
           }
         }
      }
@@ -150,9 +165,18 @@ if (buttonstate3 != lastbuttonstate3)
     {
        if (buttonstate3 == LOW)
        {
+       set_speed = set_speed + 5;
+       }
+    }
+//______________SET BUTTON NR2
+if (buttonstate2 != lastbuttonstate2)
+   {
+       if (buttonstate2 == LOW)
+       {
        set_speed = set_speed - 5;
        }
     }
+
     
 //______________LIMIT FOR SETSPEED
 if (set_speed > 200)
@@ -160,30 +184,20 @@ if (set_speed > 200)
       set_speed = 0;
     }
     
-//______________SET BUTTON NR2
-if (buttonstate2 == LOW)
-   {
-   blinker_right = false;
-   }
-  else
-   {
-   blinker_right = true;
-   }
 
 //______________SET BUTTON NR1
-if (buttonstate1 == LOW)
-  {
-   blinker_left = false;
-   }
-  else
+if (buttonstate1 != lastbuttonstate1)
    {
-   blinker_left = true;
+       if (buttonstate1 == LOW)
+       {
+       OP_ON = false;
+       }
    }
-   
-//______________SET CLUTCH
+
+//______________SET CLUTCH SWITCH
 if (ClutchSwitchState == LOW)
    {
-  //  Serial.println("Clutch Pedal is pressed");
+  //  ("Clutch Pedal is pressed");
    }
 
 lastbuttonstate1 = buttonstate1;
@@ -243,7 +257,7 @@ lastGAS_RELEASED = GAS_RELEASED;
     CAN.write(dat_aa[ii]);
   }
   CAN.endPacket();
-
+/*
   //0x3b7 msg ESP_CONTROL
   uint8_t dat_3b7[8];
   dat_3b7[0] = 0x0;
@@ -260,6 +274,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   }
   CAN.endPacket();
 
+*/
   //0x620 msg STEATS_DOORS
   uint8_t dat_620[8];
   dat_620[0] = 0x10;
@@ -324,16 +339,18 @@ lastGAS_RELEASED = GAS_RELEASED;
   //______________CONVERTING INTO RIGHT VALUE USING DBC SCALE
   LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
   LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
+
   
-  //0x224 msg BRAKE_MODULE
-    if (CAN.packetId() == 0x224)
+  //0x224 msg BRAKE_MODULE --- WE are using the 0x3b7 message, which is ESP_CONTROL to reduce traffic on the can network
+    if (CAN.packetId() == 0x3b7)
       {
-      uint8_t dat_224[8];
+      uint8_t dat_3b7[8];
       for (int ii = 0; ii <= 7; ii++) {
-        dat_224[ii]  = (char) CAN.read();
+        dat_3b7[ii]  = (char) CAN.read();
         }
-        BRAKE_PRESSED = (dat_224[0] << 5);
+        BRAKE_PRESSED = (dat_3b7[0] << 5);
         }
+
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
@@ -344,6 +361,7 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
+
   
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
 if (set_speed >= ((average * 100) + 15))
@@ -356,6 +374,7 @@ if (set_speed >= ((average * 100) + 15))
          }
       }
    }
+
 }
 
 void rpm() {
