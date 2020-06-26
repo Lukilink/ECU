@@ -7,7 +7,7 @@ int LCR_speed_diff = 15; // at which speed differende to the leas it recommends 
 int LCR_lead_distance = 100; // minimum distance to the lead
 
 
-//______________BLYNK
+//______________BLYNK and WIFI
 /* Comment this out to disable prints and save space */
 //#define BLYNK_PRINT Serial
 #include <SPI.h>
@@ -60,7 +60,6 @@ float LEAD_REL_SPEED_RAW = 0;
 boolean BRAKE_PRESSED = true;
 boolean GAS_RELEASED = false;
 
-
 //______________FOR SMOOTHING SPD
 const int numReadings = 160;
 float readings[numReadings];
@@ -75,7 +74,6 @@ int spd;
 unsigned long lastmillis;
 unsigned long duration;
 uint8_t encoder = 0;
-
 
 //______________BLYNK
 BlynkTimer timer;
@@ -115,7 +113,7 @@ Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
   
 timer.setInterval(500L, myTimerEvent);
   
-
+//______________initialize pins 
 pinMode(interruptPin, INPUT_PULLUP);
 attachInterrupt(digitalPinToInterrupt(interruptPin), rpm, FALLING);
 pinMode(button1, INPUT);
@@ -198,17 +196,7 @@ boolean blinker_right = digitalRead(BlinkerPinRight); // Right Blinker
      
     
 
-/*
-Serial.print("blinker_left");
-Serial.print(blinker_left);
-Serial.print("     ");
-Serial.print("blinker_right");
-Serial.print(blinker_right);
-Serial.println("     ");
-*/
-
 //______________SET OP OFF WHEN BRAKE IS PRESSED
-
        if (BRAKE_PRESSED == true)
        {
        OP_ON = false;
@@ -220,6 +208,7 @@ Serial.println("     ");
        {
        OP_ON = false;
        }
+  
 //______________SET BUTTON NR4
 if (buttonstate4 != lastbuttonstate4)
     {
@@ -253,7 +242,6 @@ if (buttonstate2 != lastbuttonstate2)
        set_speed = set_speed - 5;
        }
     }
-
     
 //______________LIMIT FOR SETSPEED
 if (set_speed > 200)
@@ -261,7 +249,6 @@ if (set_speed > 200)
       set_speed = 0;
     }
     
-
 //______________SET BUTTON NR1
 if (buttonstate1 != lastbuttonstate1)
    {
@@ -277,6 +264,7 @@ if (ClutchSwitchState == LOW)
   //  ("Clutch Pedal is pressed");
    }
 
+//______________RESET BUTTONS & VALUES
 lastbuttonstate1 = buttonstate1;
 lastbuttonstate2 = buttonstate2;
 lastbuttonstate3 = buttonstate3;
@@ -285,7 +273,6 @@ lastBRAKE_PRESSED = BRAKE_PRESSED;
 lastGAS_RELEASED = GAS_RELEASED;
 
 //______________SENDING_CAN_MESSAGES
-
   //0x1d2 msg PCM_CRUISE
   uint8_t dat_1d2[8];
   dat_1d2[0] = (OP_ON << 5) & 0x20 | (GAS_RELEASED << 4) & 0x10;
@@ -334,6 +321,7 @@ lastGAS_RELEASED = GAS_RELEASED;
     CAN.write(dat_aa[ii]);
   }
   CAN.endPacket();
+  
 /* ************we are sending this message from BRAKE ECU for safetyness
   //0x3b7 msg ESP_CONTROL
   uint8_t dat_3b7[8];
@@ -412,12 +400,12 @@ lastGAS_RELEASED = GAS_RELEASED;
         LEAD_LONG_DIST_RAW = (dat_2e6[0] << 8 | dat_2e6[1] << 3); 
         LEAD_REL_SPEED_RAW = (dat_2e6[2] << 8 | dat_2e6[3] << 4);
         }
-  //______________CONVERTING INTO RIGHT VALUE USING DBC SCALE
+  //CONVERTING INTO RIGHT VALUE USING DBC SCALE
   LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
   LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
 
   
-  //0x224 msg BRAKE_MODULE --- WE are using the 0x3b7 message, which is ESP_CONTROL to reduce traffic on the can network
+  //0x3b7 msg ESP_CONTROL --- WE are sending the 0x3b7 message from Brake_ECU, to reduce traffic on the can and improve safety
     if (CAN.packetId() == 0x3b7)
       {
       uint8_t dat_3b7[8];
@@ -426,7 +414,6 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         BRAKE_PRESSED = (dat_3b7[0] << 5);
         }
-
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
@@ -437,7 +424,6 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
-
   
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
   if ((average * 100) >= LCR_minimum_speed){
@@ -450,7 +436,6 @@ lastGAS_RELEASED = GAS_RELEASED;
       }
    }
   
-  
 //______________COUNTING LOOPS AND BOOBS
 if((last_loop_calc +5000) < millis()){
   last_loop_calc  = millis() - last_loop_calc;
@@ -461,16 +446,16 @@ if((last_loop_calc +5000) < millis()){
   loop_count        = 0;
   interrupt_counter = 0;
   last_loop_calc    = millis();
+  }
+  loop_count++;
+  //Serial.println (ausgabe_loop_sec);
   
-}
-
-loop_count++;
-//Serial.println (ausgabe_loop_sec);
-  
-//______________RUN BLYNK
+//______________RUN BLYNK APP
 Blynk.run();
 timer.run(); // Initiates BlynkTimer
-}
+  
+} //______________END OF LOOP
+
 
 void rpm() {
   half_revolutions++;
