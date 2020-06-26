@@ -1,10 +1,15 @@
 // MAIN ECU
 #include <CAN.h>
 
+//______________LCR (Lane Change Revommendittion) VARIABLES
+int LCR_minimum_speed = 80; // below this speed the feature is disabled
+int LCR_speed_diff = 15; // at which speed differende to the leas it recommends a lane change
+int LCR_lead_distance = 100; // minimum distance to the lead
+
+
 //______________BLYNK
 /* Comment this out to disable prints and save space */
 //#define BLYNK_PRINT Serial
-
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include <BlynkSimpleWiFiNINA.h>
@@ -12,9 +17,14 @@ char auth[] = "RDyNQX1ZiETyEM_prEITRBL7TRYpYJQn";
 char ssid[] = "Lukephone";
 char pass[] = "123456789";
 
+//______________COUNTING LOOPS AND BOOBS
+float       loop_count            = 0;
+float       last_loop_calc        = 0;
+float       ausgabe_loop_sec      = 0;
+float       interrupt_counter     = 0;
+float       ausgabe_int_sec       = 0;
 
-//______________BUTTONS AND SWITCHES
-
+//______________BUTTONS / SWITCHES / VALUES
 int BlinkerPinLeft = 4;
 int BlinkerPinRight = 5;
 int button4 = 8;
@@ -33,16 +43,16 @@ int buttonstate1;
 int lastbuttonstate1;
 boolean lastGAS_RELEASED = false;
 boolean lastBRAKE_PRESSED = false;
-
-
+long last_blinker_right;
+long last_blinker_left;
 
 //______________VALUES SEND ON CAN
 boolean OP_ON = false;
 boolean MAIN_ON = true;
 uint8_t set_speed = 0x0;
 double average = 0; 
-boolean blinker_left = true;
-boolean blinker_right = true;
+boolean blinker_left_on = true;
+boolean blinker_right_on = true;
 float LEAD_LONG_DIST = 0;
 float LEAD_REL_SPEED = 0;
 float LEAD_LONG_DIST_RAW = 0;
@@ -82,12 +92,12 @@ void myTimerEvent()
 }
 BLYNK_WRITE(V3)
 {
-  int pinValueV3 = param.asInt(); // assigning incoming value from pin V1 to a variable
+  int pinValueV3 = param.asInt(); // assigning incoming value from pin V3 to a variable
   set_speed = pinValueV3;
 }
 BLYNK_WRITE(V2)
 {
-  boolean pinValueV2 = param.asInt(); // assigning incoming value from pin V1 to a variable
+  boolean pinValueV2 = param.asInt(); // assigning incoming value from pin V2 to a variable
   OP_ON = pinValueV2;
 }
 
@@ -96,9 +106,12 @@ void setup() {
 //Serial.begin(9600);
 CAN.begin(500E3);
 Blynk.begin(auth, ssid, pass);
-  // You can also specify server:
-  //Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
-  //Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+  
+/* 
+// You can also specify server:
+Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
+Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+*/
   
 timer.setInterval(500L, myTimerEvent);
   
@@ -160,8 +173,30 @@ buttonstate3 = digitalRead(button3);
 buttonstate2 = digitalRead(button2);
 buttonstate1 = digitalRead(button1);
 
-blinker_left = digitalRead(BlinkerPinLeft);
-blinker_right = digitalRead(BlinkerPinRight);
+//______________READING BLINKERS & LOGIC
+boolean blinker_left = digitalRead(BlinkerPinLeft); // Left Blinker
+  
+  if (blinker_left){
+    last_blinker_left = millis();
+  }
+  if (last_blinker_left + 1000 < millis()){
+      blinker_left_on = false;
+  }else{
+      blinker_left_on =  true;
+  }
+
+boolean blinker_right = digitalRead(BlinkerPinRight); // Right Blinker
+  
+  if (blinker_right){
+    last_blinker_right = millis();
+  }
+  if (last_blinker_right + 1000 < millis()){
+      blinker_right_on = false;
+  }else{
+      blinker_right_on =  true;
+  }
+     
+    
 
 /*
 Serial.print("blinker_left");
@@ -299,7 +334,7 @@ lastGAS_RELEASED = GAS_RELEASED;
     CAN.write(dat_aa[ii]);
   }
   CAN.endPacket();
-/*
+/* ************we are sending this message from BRAKE ECU for safetyness
   //0x3b7 msg ESP_CONTROL
   uint8_t dat_3b7[8];
   dat_3b7[0] = 0x0;
@@ -353,7 +388,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   dat_614[0] = 0x29;
   dat_614[1] = 0x0;
   dat_614[2] = 0x01;
-  dat_614[3] = (blinker_left << 5) & 0x20 |(blinker_right << 4) & 0x10;
+  dat_614[3] = (blinker_left_on << 5) & 0x20 |(blinker_right_on << 4) & 0x10;
   dat_614[4] = 0x0;
   dat_614[5] = 0x0;
   dat_614[6] = 0x76;
@@ -405,19 +440,36 @@ lastGAS_RELEASED = GAS_RELEASED;
 
   
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
-if (set_speed >= ((average * 100) + 15))
+  if ((average * 100) >= LCR_minimum_speed){
+  if (set_speed >= ((average * 100) + LCR_speed_diff))
    {
-   if (LEAD_REL_SPEED  <= 15)
-      {
-      if (LEAD_LONG_DIST <= 100)
+      if (LEAD_LONG_DIST <= LCR_lead_distance)
          {    
-         blinker_left = false;
+         blinker_left_on = false;
          }
       }
    }
   
-  Blynk.run();
-  timer.run(); // Initiates BlynkTimer
+  
+//______________COUNTING LOOPS AND BOOBS
+if((last_loop_calc +5000) < millis()){
+  last_loop_calc  = millis() - last_loop_calc;
+  
+  ausgabe_loop_sec  = (loop_count        *1000)   / last_loop_calc;
+  ausgabe_int_sec   = (interrupt_counter *1000)   / last_loop_calc;
+
+  loop_count        = 0;
+  interrupt_counter = 0;
+  last_loop_calc    = millis();
+  
+}
+
+loop_count++;
+//Serial.println (ausgabe_loop_sec);
+  
+//______________RUN BLYNK
+Blynk.run();
+timer.run(); // Initiates BlynkTimer
 }
 
 void rpm() {
