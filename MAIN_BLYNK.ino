@@ -1,12 +1,6 @@
 // MAIN ECU
 #include <CAN.h>
 
-//______________LCR (Lane Change Revommendittion) VARIABLES
-int LCR_minimum_speed = 80; // below this speed the feature is disabled
-int LCR_speed_diff = 15; // at which speed differende to the leas it recommends a lane change
-int LCR_lead_distance = 100; // minimum distance to the lead
-
-
 //______________BLYNK and WIFI
 /* Comment this out to disable prints and save space */
 //#define BLYNK_PRINT Serial
@@ -16,6 +10,11 @@ int LCR_lead_distance = 100; // minimum distance to the lead
 char auth[] = "RDyNQX1ZiETyEM_prEITRBL7TRYpYJQn";
 char ssid[] = "Lukephone";
 char pass[] = "123456789";
+
+//______________LCR (Lane Change Revommendittion) VARIABLES
+int LCR_minimum_speed = 80; // below this speed the feature is disabled
+int LCR_speed_diff = 15; // at which speed differende to the leas it recommends a lane change
+int LCR_lead_distance = 100; // minimum distance to the lead
 
 //______________COUNTING LOOPS AND BOOBS
 float       loop_count            = 0;
@@ -101,10 +100,12 @@ BLYNK_WRITE(V2)
 
 void setup() {
   
-//Serial.begin(9600);
+Serial.begin(9600);
+Serial.println("starting_can...");
 CAN.begin(500E3);
+//Serial.println("starting_blynk...");
 Blynk.begin(auth, ssid, pass);
-  
+ 
 /* 
 // You can also specify server:
 Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
@@ -131,7 +132,7 @@ pinMode(BlinkerPinRight, INPUT_PULLUP);
 }
 
 void loop() {
-  
+
 //______________READ SPD SENSOR
 attachInterrupt(1,rpm, FALLING);
 
@@ -177,7 +178,7 @@ boolean blinker_left = digitalRead(BlinkerPinLeft); // Left Blinker
   if (blinker_left){
     last_blinker_left = millis();
   }
-  if (last_blinker_left + 1000 < millis()){
+  if (last_blinker_left + 500 < millis()){
       blinker_left_on = false;
   }else{
       blinker_left_on =  true;
@@ -188,7 +189,7 @@ boolean blinker_right = digitalRead(BlinkerPinRight); // Right Blinker
   if (blinker_right){
     last_blinker_right = millis();
   }
-  if (last_blinker_right + 1000 < millis()){
+  if (last_blinker_right + 500 < millis()){
       blinker_right_on = false;
   }else{
       blinker_right_on =  true;
@@ -448,7 +449,7 @@ if((last_loop_calc +5000) < millis()){
   last_loop_calc    = millis();
   }
   loop_count++;
-  //Serial.println (ausgabe_loop_sec);
+//  Serial.println (ausgabe_loop_sec);
   
 //______________RUN BLYNK APP
 Blynk.run();
