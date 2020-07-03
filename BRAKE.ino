@@ -7,8 +7,8 @@
 
 //________________this values needs to be define for each car
 int PERM_ERROR = 4; // will allow a diffrence between targetPressure and currentPressure
-int maxPressure = 130; // the max pressure your actuator is able to aply
-int minPressure = 84; //the pressure in stand still
+int maxPressure = 50; // the max pressure your actuator is able to aply
+int minPressure = 35; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
 
@@ -34,7 +34,7 @@ boolean BRAKE_PRESSED = true;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
- Serial.begin(115200);
+// Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -141,8 +141,6 @@ if (currentPressure >= (targetPressure + 25))
 else {
         BRAKE_PRESSED = false;
      }
-
-Serial.println(BRAKE_PRESSED);
 
 //________________send_ON_CAN-BUS 
 //0x3b7 msg ESP_CONTROL
