@@ -74,6 +74,7 @@ unsigned long lastmillis;
 unsigned long duration;
 uint8_t encoder = 0;
 
+/*
 //______________BLYNK
 BlynkTimer timer;
 
@@ -97,22 +98,22 @@ BLYNK_WRITE(V2)
   boolean pinValueV2 = param.asInt(); // assigning incoming value from pin V2 to a variable
   OP_ON = pinValueV2;
 }
-
+*/
 void setup() {
   
 Serial.begin(9600);
-Serial.println("starting_can...");
+
 CAN.begin(500E3);
-//Serial.println("starting_blynk...");
-Blynk.begin(auth, ssid, pass);
+
+//Blynk.begin(auth, ssid, pass);
  
 /* 
 // You can also specify server:
 Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
 Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
-*/
-  
 timer.setInterval(500L, myTimerEvent);
+
+*/
   
 //______________initialize pins 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -437,7 +438,7 @@ lastGAS_RELEASED = GAS_RELEASED;
       }
    }
   
-//______________COUNTING LOOPS AND BOOBS
+/* //______________COUNTING LOOPS AND BOOBS
 if((last_loop_calc +5000) < millis()){
   last_loop_calc  = millis() - last_loop_calc;
   
@@ -450,11 +451,13 @@ if((last_loop_calc +5000) < millis()){
   }
   loop_count++;
 //  Serial.println (ausgabe_loop_sec);
-  
+*/
+
+/* 
 //______________RUN BLYNK APP
 Blynk.run();
 timer.run(); // Initiates BlynkTimer
-  
+*/  
 } //______________END OF LOOP
 
 
