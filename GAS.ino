@@ -84,32 +84,31 @@ float targetPosition = (((ACC_CMD_PERCENT / 100) * (maxPot - minPot)) + minPot);
 if (!cancel || ACC_CMD_PERCENT == 0) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
- }
+  }
    
-else {
-    analogWrite(S_PWM, 255);
-    }
 
-//________________press or release the pedal to match targetPosition & respect endpoints
-if (abs(potiPosition - targetPosition) >= PERM_ERROR)
-  {
-    if ((potiPosition < targetPosition) && (potiPosition < maxPot)) //if we are lower than target and not at endpoint
-        { 
-        analogWrite(M_PWM, 255);  //run Motor
-        digitalWrite(M_DIR, LOW); //motor driection left
-        }    
-    else if ((potiPosition > targetPosition) && (potiPosition >= minPot)) //if we are higher than target and not at endpoint
-        {       
-        analogWrite(M_PWM, 255);   //run Motor
-        digitalWrite(M_DIR, HIGH); //motor driection right
-        }
-  }  
-  
-//________________if we match target position, just stay here
+//________________press or release the pedal to match targetPosition
+
 else {
-     analogWrite(M_PWM, 0);   //stop Motor
-     }
- 
+     analogWrite(S_PWM, 255);
+     if (abs(potiPosition - targetPosition) >= PERM_ERROR)
+        {
+          if ((potiPosition < targetPosition) && (potiPosition < maxPot)) //if we are lower than target and not at endpoint
+             { 
+              analogWrite(M_PWM, 255);  //run Motor
+              digitalWrite(M_DIR, LOW); //motor driection left
+             }    
+          else if ((potiPosition > targetPosition) && (potiPosition >= minPot)) //if we are higher than target and not at endpoint
+             {       
+              analogWrite(M_PWM, 255);   //run Motor
+              digitalWrite(M_DIR, HIGH); //motor driection right
+             }
+          }  
+      else {
+           analogWrite(M_PWM, 0); // if we match target position, just stay here
+           }
+      }
+
 //________________logic if gas is pressed by user 
 if (potiPosition >= (targetPosition + user_input_threshold))
    {
