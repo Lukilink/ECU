@@ -7,8 +7,9 @@
 int PERM_ERROR = 8; //will allow a diffrence between targetPressure and currentPressure
 int minPot = 86; //measured at actuators lowest position
 int maxPot = 920; //measured at actuators highest position
-float maxACC_CMD = 1430; //the max Value which comes from OP on CAN ID 0x200
-float minACC_CMD = 477; //the min Value which comes from OP on CAN ID 0x200
+float maxACC_CMD = 1500; //the max Value which comes from OP on CAN ID 0x200
+float minACC_CMD = 475; //the min Value which comes from OP on CAN ID 0x200
+int user_input_threshold = 150; // threshold to trigger user gas_press (potiPossition >= tagetposition + user_input_threshold)
 
 //________________define_pins
 int cancel_pin = 3; //pulled to GND when pedal pressed
@@ -30,13 +31,11 @@ boolean GAS_RELEASED = false;
 
 void setup() {
 //________________begin Monitor - only use it for debugging
-Serial.begin(115200);
+//Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
 CAN.filter(0x200);
-CAN.filter(0x2c1);
-
 
 //________________set up pin modes
 pinMode(cancel_pin, INPUT_PULLUP);
@@ -76,26 +75,19 @@ else {
     ACC_CMD1 = minACC_CMD;
     }
 
-
 ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
 
 //________________calculating ACC_CMD_PERCENT into targetPosition 
 float targetPosition = (((ACC_CMD_PERCENT / 100) * (maxPot - minPot)) + minPot);
 
-//________________do nothing if ACC_CMD is 0
-if (ACC_CMD_PERCENT == 0){
-   analogWrite(S_PWM, 0);  //open solenoid
-   analogWrite(M_PWM, 0);  //stop Motor
-}
-
-//________________do nothing if cancel
-  If (cancel = false) {
+//________________do nothing if cancel = flase or if  ACC_CMD is 0
+if (!cancel || ACC_CMD_PERCENT == 0) {
   analogWrite(S_PWM, 0);  //open solenoid
   analogWrite(M_PWM, 0);  //stop Motor
  }
    
 else {
-  analogWrite(S_PWM, 255);
+    analogWrite(S_PWM, 255);
     }
 
 //________________press or release the pedal to match targetPosition & respect endpoints
@@ -118,18 +110,14 @@ else {
      analogWrite(M_PWM, 0);   //stop Motor
      }
  
-//________________logic if gas is pressed by user
- 
-if (potiPosition >= (targetPosition + 150))
+//________________logic if gas is pressed by user 
+if (potiPosition >= (targetPosition + user_input_threshold))
    {
      GAS_RELEASED = false;
-     Serial.println("GAS PRESSED");
-    }
+   }
 else {
      GAS_RELEASED = true;
      }
-
-
     
 //______________SENDING_CAN_MESSAGES
 
