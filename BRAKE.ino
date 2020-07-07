@@ -8,12 +8,14 @@
 //________________this values needs to be define for each car
 int PERM_ERROR = 4; // will allow a diffrence between targetPressure and currentPressure
 int maxPressure = 50; // the max pressure your actuator is able to aply
-int minPressure = 35; //the pressure in stand still
+int minPressure = 37; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
+int brake_pressed_threshold = 10; // threshold when user input is detected
+int brake_light_threshold = 5; // threshold when brakelights schould turn on
+
 
 //________________define_pins
-int cancel_pin = 3;
 int pressurePin = A2;
 int breaklightPin = A5;
 int M_DIR = 8; // LOW is Left / HIGH is Right
@@ -27,8 +29,9 @@ int currentPressure;
 float ACC_CMD_PERCENT = 0;
 float ACC_CMD = 0;
 float ACC_CMD1 = 0;
-boolean cancel = false;
+boolean cancel = true;
 boolean BRAKE_PRESSED = true;
+long previousMillis;
 
 
 void setup() {
@@ -40,7 +43,6 @@ void setup() {
 CAN.begin(500E3);
 
 //________________set up pin modes
-pinMode(cancel_pin, INPUT_PULLUP);
 pinMode(pressurePin, INPUT);
 pinMode(M_DIR, OUTPUT);
 pinMode(M_PWM, OUTPUT);
@@ -52,14 +54,16 @@ digitalWrite(S_DIR, HIGH);
 }
 
 void loop() {
-//________________read cancel pin
-cancel = true; //(digitalRead(cancel_pin)); 
 
-//________________read pressure sensor
-currentPressure = (analogRead(pressurePin));
+//________________read pressure sensor every 500 mills to avoid relai flickering
+long currentMillis = millis();
+if (currentMillis - previousMillis >= 500){    
+    currentPressure = (analogRead(pressurePin));
+    previousMillis = currentMillis;
+}
 
 //________________light up break lights
-if (currentPressure >= 75)
+if (currentPressure >= (minPressure + brake_light_threshold))
   {
    analogWrite(breaklightPin, 255);
   }
@@ -80,8 +84,6 @@ else
         ACC_CMD = ((dat[0] << 8 | dat[1] << 0) * -1); 
         }
 
-    
-
 //________________calculating ACC_CMD into ACC_CMD_PERCENT
 if (ACC_CMD >= minACC_CMD) {
     ACC_CMD1 = ACC_CMD;
@@ -94,23 +96,17 @@ ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
 
 //________________calculating tagetpressure from ACC_CMD_PERCENT
 float targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minPressure); // conversion from ACC_CMD_PERCENT % into targetpressure
-  
-//________________do nothing if ACC_CMD is 0
+      
+//________________do nothing and open solenoid if ACC_CMD_PERCENT is 0  
 if (ACC_CMD_PERCENT == 0){
    analogWrite(S_PWM, 0);  //open solenoid
-   analogWrite(M_PWM, 0);  //stop Motor
-}
-
-//________________do nothing while cancel, but read if it's still cancel
-while (!cancel) {
-   analogWrite(S_PWM, 0);  //open solenoid
-   analogWrite(M_PWM, 0);  //stop Motor
-   cancel = (digitalRead(cancel_pin));
+   analogWrite(M_PWM, 0);  //stop Motor;
    }
-
-//________________close solenoid
-analogWrite(S_PWM, 255);
-   
+    
+else {
+    analogWrite(S_PWM, 255);
+   }
+ 
 //________________press or release the pedal to match targetPressure & respect endpoints
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
   {
@@ -133,7 +129,7 @@ else {
 
 //________________logic to read if brake is pressed by human
     
-if (currentPressure >= (targetPressure + 25))
+if (currentPressure >= (targetPressure + brake_pressed_threshold))
     {
         BRAKE_PRESSED = true;
     }
