@@ -41,6 +41,7 @@ void setup() {
 
 //________________begin CAN
 CAN.begin(500E3);
+CAN.filter(0x343);
 
 //________________set up pin modes
 pinMode(pressurePin, INPUT);
