@@ -37,7 +37,7 @@ long previousMillis;
 void setup() {
     
 //________________begin Monitor - only use it for debugging
-// Serial.begin(115200);
+ Serial.begin(115200);
 
 //________________begin CAN
 CAN.begin(500E3);
@@ -56,15 +56,14 @@ digitalWrite(S_DIR, HIGH);
 
 void loop() {
 
-//________________read pressure sensor every 500 mills to avoid relai flickering
-long currentMillis = millis();
-if (currentMillis - previousMillis >= 500){    
-    currentPressure = (analogRead(pressurePin));
-    previousMillis = currentMillis;
-}
+//________________read pressure sensor 
+currentPressure = (analogRead(pressurePin));
+
 
 //________________light up break lights
-if (currentPressure >= (minPressure + brake_light_threshold))
+long currentMillis = millis();
+if (currentMillis - previousMillis >= 500){  
+  if (currentPressure >= (minPressure + brake_light_threshold))
   {
    analogWrite(breaklightPin, 255);
   }
@@ -72,6 +71,8 @@ else
   {
    analogWrite(breaklightPin, 0);
   }
+      previousMillis = currentMillis;
+}
 
 //________________read ACC_CMD from CANbus
  CAN.parsePacket();
@@ -92,6 +93,8 @@ if (ACC_CMD >= minACC_CMD) {
 else {
     ACC_CMD1 = minACC_CMD;
     }
+
+//Serial.println( ACC_CMD_PERCENT);
        
 ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
 
@@ -106,7 +109,7 @@ if (ACC_CMD_PERCENT == 0){
     
 else {
     analogWrite(S_PWM, 255);
-   }
+   
  
 //________________press or release the pedal to match targetPressure & respect endpoints
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
@@ -122,11 +125,12 @@ if (abs(currentPressure - targetPressure) >= PERM_ERROR)
         digitalWrite(M_DIR, LOW); //motor driection right
         }
   }  
-  
+     
 //________________if we match target position, just stay here
 else {
      analogWrite(M_PWM, 0);   //stop Motor
      }  
+}
 
 //________________logic to read if brake is pressed by human
     
