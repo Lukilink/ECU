@@ -78,15 +78,7 @@ else {
 ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
 
 //________________calculating targetPressure
-if (ACC_CMD_PERCENT == 0){
-    targetPressure = 0;
-    }
-else{  
-    targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minPressure); // conversion from ACC_CMD_PERCENT % into targetpressure
-    }  
-
-//________________close solenoid
-analogWrite(S_PWM, 255);
+targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minPressure); // conversion from ACC_CMD_PERCENT % into targetpressure
  
 //________________press or release the pedal to match targetPressure
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
@@ -96,7 +88,7 @@ if (abs(currentPressure - targetPressure) >= PERM_ERROR)
         analogWrite(M_PWM, 255);  //run Motor
         digitalWrite(M_DIR, HIGH); //motor driection left
         }    
-    else if (currentPressure > targetPressure)
+    else if (currentPressure > targetPressure) || (ACC_CMD_PERCENT == 0)
         {       
         analogWrite(M_PWM, 255);   //run Motor
         digitalWrite(M_DIR, LOW); //motor driection right
@@ -111,10 +103,12 @@ else
 if (currentPressure >= (targetPressure + brake_pressed_threshold))
     {
         BRAKE_PRESSED = true;
+        analogWrite(S_PWM, 0); //open solenoid
     }
     
 else {
         BRAKE_PRESSED = false;
+        analogWrite(S_PWM, 255); //close solenoid
      }
 
 //________________light up brakelights when brake is pressed
