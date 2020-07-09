@@ -34,7 +34,6 @@ long last_blinker_left;
 boolean OP_ON = false;
 boolean MAIN_ON = true;
 uint8_t set_speed = 0x0;
-double average = 0; 
 boolean blinker_left_on = true;
 boolean blinker_right_on = true;
 float LEAD_LONG_DIST = 0;
@@ -44,21 +43,16 @@ float LEAD_REL_SPEED_RAW = 0;
 boolean BRAKE_PRESSED = true;
 boolean GAS_RELEASED = false;
 
-//______________FOR SMOOTHING SPD
-const int numReadings = 160;
-float readings[numReadings];
-int readIndex = 0; 
-double total = 0;
 
-
-//______________DAYWALKER SPEED
+//______________DAYWALKER_SPEED
 const int VSS_HALL_SENSOR_INTERRUPT_PIN = 3;
+
 #define VSS_SENSOR_SMOOTHING 3    // 0 = just ringbuffer*refresh rate smoothing (e.g. over 800ms). highest response rate for reliable sensors 
                                   // 1 = in addition to 0 accounts for debounce effects of the sensor (additional, invalid signals) by limiting the change rate to 10kmh / REFRESH_RATE, e.g. 50kmh/s
                                   // 2 = assumes the sensor might lose revolutions at higher speeds (measures the maximum speed (shortest revolution time) for each refresh rate cycle) 
                                   // 3 = in addition to 2 accounts for debounce effects of the sensor (additional, invalid signals) by limiting the change rate to 10kmh / REFRESH_RATE, e.g. 50kmh/s
 #define VSS_MAX_SPEED 160.0f    // the maximum speed in kmh handled by the ECU in smoothing mode 1 & 2
-#define VSS_DISTANCE_PER_REVOLUTION 0.525f // 52.5cm driving distance per sensor revolution
+#define VSS_DISTANCE_PER_REVOLUTION 0.25f // 25cm driving distance per sensor revolution
 
 const int VSS_RINGBUFFER_SIZE = 4;
 const int VSS_REFRESH_RATE_MS = 200;
@@ -78,42 +72,51 @@ volatile byte vssSensorRevolutions=0;
 volatile unsigned long vssLastTriggerMicros=0;
 unsigned long vssLastUnhandledTriggerMicros=0;
 
+//______________TOYOTA CAN CHECKSUM
+int can_cksum (uint8_t *dat, uint8_t len, uint16_t addr) {
+  uint8_t checksum = 0;
+  checksum = ((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
+  //uint16_t temp_msg = msg;
+  for (int ii = 0; ii < len; ii++) {
+    checksum += (dat[ii]);
+  }
+  return checksum;
+}
+
+
+//______________DAYWALKER_SPEED
+void interruptVssSensor() {
+  vssSensorRevolutions++;
+  vssLastTriggerMicros=micros();
+}
+
+
 
 void setup() {
   
 Serial.begin(9600);
-
 CAN.begin(500E3);
+
   
 //______________initialize pins 
-pinMode(interruptPin, INPUT_PULLUP);
-// attachInterrupt(digitalPinToInterrupt(interruptPin), rpm, FALLING);
 pinMode(button1, INPUT);
 pinMode(button2, INPUT);
 pinMode(button3, INPUT);
 pinMode(button4, INPUT);
 pinMode(BlinkerPinLeft, INPUT_PULLUP);
 pinMode(BlinkerPinRight, INPUT_PULLUP);
-  
-  
-void interruptVssSensor() {
-  vssSensorRevolutions++;
-  vssLastTriggerMicros=micros();
-}
-  
-void setupCruise() {
+
   pinMode(VSS_HALL_SENSOR_INTERRUPT_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(VSS_HALL_SENSOR_INTERRUPT_PIN), interruptVssSensor, FALLING);
-  pinMode(BUTTON_1_PIN, INPUT_PULLUP);
-  pinMode(BUTTON_2_PIN, INPUT_PULLUP);
-  pinMode(BUTTON_3_PIN, INPUT_PULLUP);
-
 
   for (int i=0; i<VSS_RINGBUFFER_SIZE; i++)
     vssRingBuffer[i]=0;
+
+
 }
 
-  /**
+//______________DAYWALKER_SPEED
+/**
  * This function is called each loop and determines the current vssAvgSpeedKMH.
  * It measures the exact micros elapsed between the last handled hall sensor trigger and the latest trigger [interrupt driven].
  * The duration is is used to determine the highest current speed within each VSS_REFRESH_RATE_MS interval 
@@ -157,7 +160,6 @@ void loopUpdateVssSensor() {
         #if VSS_SENSOR_SMOOTHING==3
           vssSpeedKMH=max(min(vssSpeedKMH, vssAvgSpeedKMH+10), vssAvgSpeedKMH-10);
         #endif
-        vssTotalSensorRevolutions += tmpVssSensorRevolutions;
     }
     else if (micros()-vssLastUnhandledTriggerMicros>1000L*1000L) { // 1 second without hall signal is interpreted as standstill
       vssSpeedKMH=0;
@@ -190,8 +192,9 @@ void loopUpdateVssSensor() {
 
 
 void loop() {
-
-loopUpdateVssSensor(); // checks for received vss / hall sensor interrupts, updates & smoothes speed
+  
+//______________DAYWALKER_SPEED
+loopUpdateVssSensor();  
  
 //______________READING BUTTONS AND SWITCHES
 ClutchSwitchState = digitalRead(CluchSwitch);
@@ -222,8 +225,7 @@ boolean blinker_right = digitalRead(BlinkerPinRight); // Right Blinker
   }else{
       blinker_right_on =  true;
   }
-     
-    
+         
 //______________SET OP OFF WHEN BRAKE IS PRESSED
        if (BRAKE_PRESSED == true)
        {
@@ -248,7 +250,7 @@ if (buttonstate4 != lastbuttonstate4)
           else
           {
           OP_ON = true;
-          set_speed = (average + 3);
+          set_speed = (vssAvgSpeedKMH + 3);
           }
         }
      }
@@ -454,8 +456,8 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
   
 //______________LOGIC FOR LANE CHANGE RECOMENDITION
-  if ((average * 100) >= LCR_minimum_speed){
-  if (set_speed >= ((average * 100) + LCR_speed_diff))
+  if ((vssAvgSpeedKMH * 100) >= LCR_minimum_speed){
+  if (set_speed >= ((vssAvgSpeedKMH * 100) + LCR_speed_diff))
    {
       if (LEAD_LONG_DIST <= LCR_lead_distance)
          {    
@@ -466,24 +468,3 @@ lastGAS_RELEASED = GAS_RELEASED;
   
   
 } //______________END OF LOOP
-
-
-void rpm() {
-  half_revolutions++;
-  if (encoder > 255)
-  {
-    encoder = 0;
-  }
-  encoder++;
-}
-
-//TOYOTA CAN CHECKSUM
-int can_cksum (uint8_t *dat, uint8_t len, uint16_t addr) {
-  uint8_t checksum = 0;
-  checksum = ((addr & 0xFF00) >> 8) + (addr & 0x00FF) + len + 1;
-  //uint16_t temp_msg = msg;
-  for (int ii = 0; ii < len; ii++) {
-    checksum += (dat[ii]);
-  }
-  return checksum;
-}
