@@ -1,27 +1,12 @@
 // MAIN ECU
 #include <CAN.h>
 
-//______________BLYNK and WIFI
-/* Comment this out to disable prints and save space */
-//#define BLYNK_PRINT Serial
-#include <SPI.h>
-#include <WiFiNINA.h>
-#include <BlynkSimpleWiFiNINA.h>
-char auth[] = "RDyNQX1ZiETyEM_prEITRBL7TRYpYJQn";
-char ssid[] = "Lukephone";
-char pass[] = "123456789";
 
-//______________LCR (Lane Change Revommendittion) VARIABLES
+//______________LCR (Lane Change Recommendation) VARIABLES
 int LCR_minimum_speed = 80; // below this speed the feature is disabled
 int LCR_speed_diff = 15; // at which speed differende to the leas it recommends a lane change
 int LCR_lead_distance = 100; // minimum distance to the lead
 
-//______________COUNTING LOOPS AND BOOBS
-float       loop_count            = 0;
-float       last_loop_calc        = 0;
-float       ausgabe_loop_sec      = 0;
-float       interrupt_counter     = 0;
-float       ausgabe_int_sec       = 0;
 
 //______________BUTTONS / SWITCHES / VALUES
 int BlinkerPinLeft = 4;
@@ -74,44 +59,13 @@ unsigned long lastmillis;
 unsigned long duration;
 uint8_t encoder = 0;
 
-/*
-//______________BLYNK
-BlynkTimer timer;
-// This function sends Arduino's up time every second to Virtual Pin (5).
-// In the app, Widget's reading frequency should be set to PUSH. This means
-// that you define how often to send data to Blynk App.
-void myTimerEvent()
-{
-  // You can send any value at any time.
-  // Please don't send more that 10 values per second.
-  Blynk.virtualWrite(V0, average / 500);
-  Blynk.virtualWrite(V1, LEAD_LONG_DIST / 500);
-}
-BLYNK_WRITE(V3)
-{
-  int pinValueV3 = param.asInt(); // assigning incoming value from pin V3 to a variable
-  set_speed = pinValueV3;
-}
-BLYNK_WRITE(V2)
-{
-  boolean pinValueV2 = param.asInt(); // assigning incoming value from pin V2 to a variable
-  OP_ON = pinValueV2;
-}
-*/
+
 void setup() {
   
 Serial.begin(9600);
 
 CAN.begin(500E3);
 
-//Blynk.begin(auth, ssid, pass);
- 
-/* 
-// You can also specify server:
-Blynk.begin(auth, ssid, pass, "blynk-cloud.com", 80);
-Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
-timer.setInterval(500L, myTimerEvent);
-*/
   
 //______________initialize pins 
 pinMode(interruptPin, INPUT_PULLUP);
@@ -122,7 +76,6 @@ pinMode(button3, INPUT);
 pinMode(button4, INPUT);
 pinMode(BlinkerPinLeft, INPUT_PULLUP);
 pinMode(BlinkerPinRight, INPUT_PULLUP);
-
 
 //______________initialize smoothing inputs
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
@@ -195,13 +148,11 @@ boolean blinker_right = digitalRead(BlinkerPinRight); // Right Blinker
   }
      
     
-
 //______________SET OP OFF WHEN BRAKE IS PRESSED
        if (BRAKE_PRESSED == true)
        {
        OP_ON = false;
        }
- 
     
 //______________SET OP OFF WHEN GAS IS PRESSED
        if (GAS_RELEASED == false)
@@ -234,6 +185,7 @@ if (buttonstate3 != lastbuttonstate3)
        set_speed = set_speed + 5;
        }
     }
+
 //______________SET BUTTON NR2
 if (buttonstate2 != lastbuttonstate2)
    {
@@ -436,25 +388,7 @@ lastGAS_RELEASED = GAS_RELEASED;
       }
    }
   
-/* //______________COUNTING LOOPS AND BOOBS
-if((last_loop_calc +5000) < millis()){
-  last_loop_calc  = millis() - last_loop_calc;
   
-  ausgabe_loop_sec  = (loop_count        *1000)   / last_loop_calc;
-  ausgabe_int_sec   = (interrupt_counter *1000)   / last_loop_calc;
-  loop_count        = 0;
-  interrupt_counter = 0;
-  last_loop_calc    = millis();
-  }
-  loop_count++;
-//  Serial.println (ausgabe_loop_sec);
-*/
-
-/* 
-//______________RUN BLYNK APP
-Blynk.run();
-timer.run(); // Initiates BlynkTimer
-*/  
 } //______________END OF LOOP
 
 
