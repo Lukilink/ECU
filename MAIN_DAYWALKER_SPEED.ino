@@ -52,7 +52,7 @@ const int VSS_HALL_SENSOR_INTERRUPT_PIN = 3;
                                   // 2 = assumes the sensor might lose revolutions at higher speeds (measures the maximum speed (shortest revolution time) for each refresh rate cycle) 
                                   // 3 = in addition to 2 accounts for debounce effects of the sensor (additional, invalid signals) by limiting the change rate to 10kmh / REFRESH_RATE, e.g. 50kmh/s
 #define VSS_MAX_SPEED 160.0f    // the maximum speed in kmh handled by the ECU in smoothing mode 1 & 2
-#define VSS_DISTANCE_PER_REVOLUTION 0.25f // 25cm driving distance per sensor revolution
+#define VSS_DISTANCE_PER_REVOLUTION 0.135f // 12.5cm driving distance per sensor revolution
 
 const int VSS_RINGBUFFER_SIZE = 4;
 const int VSS_REFRESH_RATE_MS = 200;
