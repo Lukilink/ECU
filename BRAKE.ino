@@ -29,6 +29,8 @@ float ACC_CMD_PERCENT;
 float ACC_CMD;
 float ACC_CMD1;
 boolean BRAKE_PRESSED = true;
+boolean releasing_by_OP = false;
+boolean open_solenoid = true;
 long previousMillis;
 
 
@@ -83,12 +85,19 @@ targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minP
 //________________press or release the pedal to match targetPressure
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
   {
+    open_solenoid = false;
     if (currentPressure < targetPressure)
         { 
         analogWrite(M_PWM, 255);  //run Motor
         digitalWrite(M_DIR, HIGH); //motor driection left
         }    
-    else if (currentPressure > targetPressure) || (ACC_CMD_PERCENT == 0)
+    else if (currentPressure > targetPressure)
+        {       
+        analogWrite(M_PWM, 255);   //run Motor
+        digitalWrite(M_DIR, LOW); //motor driection right
+        releasing_by_OP = true;
+        }
+    else if (ACC_CMD_PERCENT == 0)
         {       
         analogWrite(M_PWM, 255);   //run Motor
         digitalWrite(M_DIR, LOW); //motor driection right
@@ -96,22 +105,32 @@ if (abs(currentPressure - targetPressure) >= PERM_ERROR)
   }  
 else 
     {
+     open_solenoid = false;
      analogWrite(M_PWM, 0);   //if we match target position, just stay here
     }  
 
 //________________logic to read if brake is pressed by driver   
-if (currentPressure >= (targetPressure + brake_pressed_threshold))
+if ((currentPressure >= (targetPressure + brake_pressed_threshold)) && !releasing_by_OP)
     {
         BRAKE_PRESSED = true;
-        analogWrite(S_PWM, 0); //open solenoid
+        open_solenoid = true;
     }
     
 else {
         BRAKE_PRESSED = false;
-        analogWrite(S_PWM, 255); //close solenoid
      }
+ 
+//________________operate solenoid
+ if (open_solenoid)
+    { 
+    analogWrite(S_PWM, 0);
+    }
+ else
+    { 
+    analogWrite(S_PWM, 255);
+    }
 
-//________________light up brakelights when brake is pressed
+ //________________light up brakelights when brake is pressed
 long currentMillis = millis();
 if (currentMillis - previousMillis >= 200)
     {  
