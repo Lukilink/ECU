@@ -86,21 +86,21 @@ targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minP
 if (abs(currentPressure - targetPressure) >= PERM_ERROR)
   {
     open_solenoid = false;
-    if (currentPressure < targetPressure)
+    if ((currentPressure < targetPressure) && (ACC_CMD_PERCENT > 0))
         { 
         analogWrite(M_PWM, 255);  //run Motor
-        digitalWrite(M_DIR, HIGH); //motor driection left
+        digitalWrite(M_DIR, HIGH); //motor driection left | press the pedal
         }    
     else if (currentPressure > targetPressure)
         {       
         analogWrite(M_PWM, 255);   //run Motor
-        digitalWrite(M_DIR, LOW); //motor driection right
+        digitalWrite(M_DIR, LOW); //motor driection right | release the pedal
         releasing_by_OP = true;
         }
     else if (ACC_CMD_PERCENT == 0)
         {       
         analogWrite(M_PWM, 255);   //run Motor
-        digitalWrite(M_DIR, LOW); //motor driection right
+        digitalWrite(M_DIR, LOW); //motor driection right | release the pedal
         }
   }  
 else 
