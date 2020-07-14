@@ -90,6 +90,7 @@ if (abs(currentPressure - targetPressure) >= PERM_ERROR)
         { 
         analogWrite(M_PWM, 255);  //run Motor
         digitalWrite(M_DIR, HIGH); //motor driection left | press the pedal
+        releasing_by_OP = false;
         }    
     else if (currentPressure > targetPressure)
         {       
@@ -101,12 +102,14 @@ if (abs(currentPressure - targetPressure) >= PERM_ERROR)
         {       
         analogWrite(M_PWM, 255);   //run Motor
         digitalWrite(M_DIR, LOW); //motor driection right | release the pedal
+        releasing_by_OP = false;
         }
   }  
 else 
     {
      open_solenoid = false;
      analogWrite(M_PWM, 0);   //if we match target position, just stay here
+     releasing_by_OP = false;
     }  
 
 //________________logic to read if brake is pressed by driver   
