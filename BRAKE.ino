@@ -7,12 +7,12 @@
 
 //________________this values needs to be define for each car
 int PERM_ERROR = 2; // will allow a diffrence between targetPressure and currentPressure
-int maxPressure = 50; // the max pressure your actuator is able to aply
-int minPressure = 37; //the pressure in stand still
+int maxPressure = 190; // the max pressure your actuator is able to aply
+int minPressure = 100; //the pressure in stand still
 float maxACC_CMD = 500; //the max Value which comes from OP
 float minACC_CMD = 0; //the min Value which comes from OP
 int brake_pressed_threshold = 5; // threshold when user input is detected
-int brake_light_threshold = 2; // threshold when brakelights schould turn on
+int brake_light_threshold = 5; // threshold when brakelights schould turn on
 
 //________________define_pins
 int pressurePin = A2;
