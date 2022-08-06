@@ -94,7 +94,7 @@ void interruptVssSensor() {
 
 void setup() {
   
-Serial.begin(9600);
+//Serial.begin(9600);
 CAN.begin(500E3);
 
   
@@ -421,7 +421,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   CAN.parsePacket();
 
   //128x2e6 msg LEAD_INFO
-  if (CAN.packetId() == 0x2e6)
+/*  if (CAN.packetId() == 0x2e6)
       {
       uint8_t dat_2e6[8];
       for (int ii = 0; ii <= 7; ii++) {
@@ -433,7 +433,7 @@ lastGAS_RELEASED = GAS_RELEASED;
   //CONVERTING INTO RIGHT VALUE USING DBC SCALE
   LEAD_LONG_DIST = (LEAD_LONG_DIST_RAW * 0.005);
   LEAD_REL_SPEED = (LEAD_REL_SPEED_RAW * 0.009);
-
+*/
   
   //0x3b7 msg ESP_CONTROL --- WE are sending the 0x3b7 message from Brake_ECU, to reduce traffic on the can and improve safety
     if (CAN.packetId() == 0x3b7)
@@ -455,7 +455,7 @@ lastGAS_RELEASED = GAS_RELEASED;
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
   
-//______________LOGIC FOR LANE CHANGE RECOMENDITION
+/*______________LOGIC FOR LANE CHANGE RECOMENDITION
   if ((vssAvgSpeedKMH * 100) >= LCR_minimum_speed){
   if (set_speed >= ((vssAvgSpeedKMH * 100) + LCR_speed_diff))
    {
@@ -465,6 +465,6 @@ lastGAS_RELEASED = GAS_RELEASED;
          }
       }
    }
-  
+*/  
   
 } //______________END OF LOOP
