@@ -1,0 +1,243 @@
+// MAIN ECU
+#include <CAN.h>
+
+//______________LCR VARIABLES
+const int LCR_minimum_speed = 80;
+const int LCR_speed_diff = 15;
+const int LCR_lead_distance = 100;
+
+//______________BUTTONS / SWITCHES
+const int BlinkerPinLeft = 4;
+const int BlinkerPinRight = 5;
+const int button1 = 9;
+const int button2 = 6;
+const int button3 = 7;
+const int button4 = 8;
+const int ClutchSwitch = A4;
+
+//______________STATES
+bool ClutchSwitchState = false;
+bool lastGAS_RELEASED = false;
+bool lastBRAKE_PRESSED = false;
+long last_blinker_right;
+long last_blinker_left;
+
+//______________CAN VALUES
+bool OP_ON = false;
+bool MAIN_ON = true;
+uint8_t set_speed = 0x0;
+bool blinker_left_on = true;
+bool blinker_right_on = true;
+float LEAD_LONG_DIST = 0;
+float LEAD_REL_SPEED = 0;
+bool BRAKE_PRESSED = true;
+bool GAS_RELEASED = false;
+
+//______________VSS SENSOR
+const int VSS_HALL_SENSOR_INTERRUPT_PIN = 3;
+#define VSS_SENSOR_SMOOTHING 3
+#define VSS_MAX_SPEED 160.0f
+#define VSS_DISTANCE_PER_REVOLUTION 0.135f
+const int VSS_RINGBUFFER_SIZE = 4;
+const int VSS_REFRESH_RATE_MS = 200;
+float vssRingBuffer[VSS_RINGBUFFER_SIZE];
+float vssSpeedKMH = 0;
+float vssSpeedSum = 0;
+float vssAvgSpeedKMH = 0;
+float lastValidVssSpeedKMH = 0;
+int vssRingBufferIndex = 0;
+unsigned long vssDuration = 0;
+unsigned long lastVssRefresh = 0;
+unsigned long lastValidVssSpeedTs = 0;
+volatile byte vssSensorRevolutions = 0;
+volatile unsigned long vssLastTriggerMicros = 0;
+unsigned long vssLastUnhandledTriggerMicros = 0;
+
+//______________BUTTON STATES
+int buttonstate1, lastbuttonstate1;
+int buttonstate2, lastbuttonstate2;
+int buttonstate3, lastbuttonstate3;
+int buttonstate4, lastbuttonstate4;
+
+//______________INTERRUPT
+void interruptVssSensor() {
+  vssSensorRevolutions++;
+  vssLastTriggerMicros = micros();
+}
+
+//______________CAN CHECKSUM
+uint8_t can_cksum(uint8_t *dat, uint8_t len, uint16_t addr) {
+  uint8_t checksum = ((addr >> 8) + (addr & 0xFF) + len + 1);
+  for (int i = 0; i < len; i++) checksum += dat[i];
+  return checksum;
+}
+
+//______________CAN SENDER
+void sendCanMessage(uint16_t id, uint8_t* data, uint8_t len) {
+  CAN.beginPacket(id);
+  for (uint8_t i = 0; i < len; i++) CAN.write(data[i]);
+  CAN.endPacket();
+}
+
+void sendAllCanMessages() {
+  sendPcmCruise();
+  sendPcmCruise2();
+  sendWheelSpeeds();
+  sendSeatsDoors();
+  sendGearPacket();
+  sendSteeringLevers();
+}
+
+void sendPcmCruise() {
+  uint8_t dat[8] = {
+    (OP_ON << 5) | (GAS_RELEASED << 4), 0, 0, 0, 0, 0,
+    (OP_ON << 7), 0
+  };
+  dat[7] = can_cksum(dat, 7, 0x1d2);
+  sendCanMessage(0x1d2, dat, 8);
+}
+
+void sendPcmCruise2() {
+  uint8_t dat[8] = {
+    0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0
+  };
+  dat[7] = can_cksum(dat, 7, 0x1d3);
+  sendCanMessage(0x1d3, dat, 8);
+}
+
+void sendWheelSpeeds() {
+  uint16_t ws = 0x1a6f + (vssAvgSpeedKMH * 100);
+  uint8_t hi = ws >> 8;
+  uint8_t lo = ws & 0xFF;
+  uint8_t dat[8] = {hi, lo, hi, lo, hi, lo, hi, lo};
+  sendCanMessage(0xaa, dat, 8);
+}
+
+void sendSeatsDoors() {
+  uint8_t dat[8] = {0x10, 0x00, 0x00, 0x1d, 0xb0, 0x40, 0x00, 0x00};
+  sendCanMessage(0x620, dat, 8);
+}
+
+void sendGearPacket() {
+  uint8_t dat[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00};
+  sendCanMessage(0x3bc, dat, 8);
+}
+
+void sendSteeringLevers() {
+  uint8_t dat[8] = {
+    0x29, 0x00, 0x01,
+    (blinker_left_on << 5) | (blinker_right_on << 4),
+    0x00, 0x00, 0x76, 0
+  };
+  dat[7] = can_cksum(dat, 7, 0x614);
+  sendCanMessage(0x614, dat, 8);
+}
+
+//______________VSS LOOP
+void loopUpdateVssSensor() {
+  if (vssSensorRevolutions > 0) {
+    vssDuration = micros() - vssLastUnhandledTriggerMicros;
+    noInterrupts();
+    byte tmpRev = vssSensorRevolutions;
+    vssLastUnhandledTriggerMicros = vssLastTriggerMicros;
+    vssSensorRevolutions -= tmpRev;
+    interrupts();
+
+    float tmpSpeed = tmpRev * (VSS_DISTANCE_PER_REVOLUTION / (vssDuration * 1e-6)) * 3.6;
+    if (tmpSpeed <= VSS_MAX_SPEED)
+      vssSpeedKMH = max(vssSpeedKMH, tmpSpeed);
+    #if VSS_SENSOR_SMOOTHING == 3
+    vssSpeedKMH = constrain(vssSpeedKMH, vssAvgSpeedKMH - 10, vssAvgSpeedKMH + 10);
+    #endif
+  } else if (micros() - vssLastUnhandledTriggerMicros > 1e6) {
+    vssSpeedKMH = 0;
+  }
+
+  if (millis() - lastVssRefresh >= VSS_REFRESH_RATE_MS) {
+    lastVssRefresh = millis();
+    if (vssSpeedKMH > 0) {
+      lastValidVssSpeedKMH = vssSpeedKMH;
+      lastValidVssSpeedTs = millis();
+    } else if (vssSpeedKMH == 0 && millis() - lastValidVssSpeedTs < 1000) {
+      vssSpeedKMH = lastValidVssSpeedKMH;
+    }
+    vssSpeedSum -= vssRingBuffer[vssRingBufferIndex];
+    vssSpeedSum += vssSpeedKMH;
+    vssRingBuffer[vssRingBufferIndex] = vssSpeedKMH;
+    vssSpeedKMH = 0;
+    vssRingBufferIndex = (vssRingBufferIndex + 1) % VSS_RINGBUFFER_SIZE;
+    vssAvgSpeedKMH = vssSpeedSum / VSS_RINGBUFFER_SIZE;
+  }
+}
+
+//______________SETUP
+void setup() {
+  CAN.begin(500E3);
+  pinMode(button1, INPUT);
+  pinMode(button2, INPUT);
+  pinMode(button3, INPUT);
+  pinMode(button4, INPUT);
+  pinMode(BlinkerPinLeft, INPUT_PULLUP);
+  pinMode(BlinkerPinRight, INPUT_PULLUP);
+  pinMode(VSS_HALL_SENSOR_INTERRUPT_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(VSS_HALL_SENSOR_INTERRUPT_PIN), interruptVssSensor, FALLING);
+  for (int i = 0; i < VSS_RINGBUFFER_SIZE; i++) vssRingBuffer[i] = 0;
+}
+
+//______________LOOP
+void loop() {
+  loopUpdateVssSensor();
+
+  // Read switches
+  ClutchSwitchState = digitalRead(ClutchSwitch);
+  buttonstate1 = digitalRead(button1);
+  buttonstate2 = digitalRead(button2);
+  buttonstate3 = digitalRead(button3);
+  buttonstate4 = digitalRead(button4);
+
+  blinker_left_on = (digitalRead(BlinkerPinLeft) || millis() - last_blinker_left < 500);
+  if (digitalRead(BlinkerPinLeft)) last_blinker_left = millis();
+
+  blinker_right_on = (digitalRead(BlinkerPinRight) || millis() - last_blinker_right < 500);
+  if (digitalRead(BlinkerPinRight)) last_blinker_right = millis();
+
+  if (BRAKE_PRESSED || !GAS_RELEASED) OP_ON = false;
+
+  if (buttonstate4 != lastbuttonstate4 && buttonstate4 == LOW) {
+    OP_ON = !OP_ON;
+    if (OP_ON) set_speed = vssAvgSpeedKMH + 3;
+  }
+  if (buttonstate3 != lastbuttonstate3 && buttonstate3 == LOW) set_speed += 5;
+  if (buttonstate2 != lastbuttonstate2 && buttonstate2 == LOW) set_speed -= 5;
+  if (set_speed > 200) set_speed = 0;
+  if (buttonstate1 != lastbuttonstate1 && buttonstate1 == LOW) OP_ON = false;
+
+  lastbuttonstate1 = buttonstate1;
+  lastbuttonstate2 = buttonstate2;
+  lastbuttonstate3 = buttonstate3;
+  lastbuttonstate4 = buttonstate4;
+  lastBRAKE_PRESSED = BRAKE_PRESSED;
+  lastGAS_RELEASED = GAS_RELEASED;
+
+  sendAllCanMessages();
+
+  while (CAN.parsePacket()) {
+    switch (CAN.packetId()) {
+      case 0x3b7:
+        BRAKE_PRESSED = CAN.read() & 0x20;
+        break;
+      case 0x2c1:
+        GAS_RELEASED = CAN.read() & 0x08;
+        break;
+      case 0x2e6: {
+        uint8_t dat[8];
+        for (int i = 0; i < 8; i++) dat[i] = CAN.read();
+        float raw_dist = (dat[0] << 8 | dat[1]) * 0.005;
+        float raw_speed = (dat[2] << 8 | dat[3]) * 0.009;
+        LEAD_LONG_DIST = raw_dist;
+        LEAD_REL_SPEED = raw_speed;
+        break;
+      }
+    }
+  }
+} // END OF LOOP
