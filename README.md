@@ -1,3 +1,30 @@
+1. Main Controller & CAN-Nachrichten
+Dieser Code läuft auf einem Arduino und übernimmt zentrale Steuerfunktionen:
+
+Liest den Status mehrerer Tasten (z. B. zum Ein-/Ausschalten des Tempomats) und sendet ihn über den CAN-Bus.
+Erfasst die Geschwindigkeit über einen Hallsensor und überträgt sie auf dem CAN-Bus.
+Liest den Blinkerstatus und gibt diesen ebenfalls auf dem CAN-Bus aus.
+Simuliert verschiedene CAN-Nachrichten eines Toyota Corolla.
+2. Gas Controller
+Dieser Code läuft auf einem Arduino, empfängt CAN-Nachrichten und steuert einen Motor, der mechanisch mit dem Gaspedal verbunden ist:
+
+Liest ein Potentiometer zur Bestimmung der aktuellen Drosselklappenposition.
+Empfängt einen Beschleunigungsbefehl über den CAN-Bus.
+Steuert den Motor entsprechend zur Umsetzung des gewünschten Fahrbefehls.
+3. Brake Controller
+Dieser Code läuft auf einem Arduino, empfängt CAN-Nachrichten und steuert einen Motor, der mit dem Bremspedal verbunden ist:
+
+Liest einen Drucksensor zur Ermittlung der aktuellen Bremsleistung.
+Empfängt einen Bremsbefehl über den CAN-Bus.
+Steuert den Motor so an, dass die gewünschte Bremskraft erzeugt wird.
+Erkennt manuelle Bremsbetätigung und sendet den Status über den CAN-Bus.
+
+
+
+
+
+
+
 # ECU
 
 !!! DO NOT USE ON PUBLIC ROAD !!!
