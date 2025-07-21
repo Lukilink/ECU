@@ -40,7 +40,13 @@ bool door_open_rl = false;                  // Rear Left Door
 bool door_open_rr = false;                  // Rear Right Door
 bool door_open_fr = false;                  // Front Right Door
 
-// --- Smoothing Parameters ---
+// --- Body Control State 2 Variables ---
+uint8_t ui_speed = 60;                      // UI_SPEED in km/h (simulated)
+uint8_t meter_slider_brightness_pct = 80;   // METER_SLIDER_BRIGHTNESS_PCT (in %)
+bool meter_slider_low_brightness = false;   // METER_SLIDER_LOW_BRIGHTNESS
+bool meter_slider_dimmed = false;           // METER_SLIDER_DIMMED
+uint8_t units = 1;                          // UNITS (1 = km)
+
 const int numReadings = 160;
 float readings[numReadings] = {0};
 int readIndex = 0;
@@ -153,4 +159,13 @@ void loop() {
   dat_1568[7] = (parking_brake << 4) | (seatbelt_driver_unlatched << 6) | (door_open_fl << 5); // Encode PARKING_BRAKE, SEATBELT_DRIVER_UNLATCHED, DOOR_OPEN_FL
   dat_1568[7] = dbc_checksum(dat_1568, 7, 0x1568); // Calculate checksum
   CAN.beginPacket(0x1568); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
+
+  // BODY_CONTROL_STATE_2 (0x1552)
+  uint8_t dat_1552[8] = {0};
+  dat_1552[2] = ui_speed; // Encode UI_SPEED
+  dat_1552[3] = meter_slider_brightness_pct; // Encode METER_SLIDER_BRIGHTNESS_PCT
+  dat_1552[4] = (meter_slider_low_brightness << 5) | (meter_slider_dimmed << 6); // Encode METER_SLIDER_LOW_BRIGHTNESS and METER_SLIDER_DIMMED
+  dat_1552[7] = units; // Encode UNITS
+  dat_1552[7] = dbc_checksum(dat_1552, 7, 0x1552); // Calculate checksum
+  CAN.beginPacket(0x1552); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
 } // loop
