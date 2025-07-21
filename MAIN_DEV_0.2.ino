@@ -21,9 +21,9 @@ bool blinker_left = false;
 bool blinker_right = false;
 bool BRAKE_PRESSED = false;
 bool GAS_RELEASED = true;
-uint8_t PCM_FOLLOW_DISTANCE = 0;   // PCM_FOLLOW_DISTANCE Signal
-uint8_t LOW_SPEED_LOCKOUT = 0;     // LOW_SPEED_LOCKOUT Signal
-bool ACC_FAULTED = false;          // ACC_FAULTED Signal
+uint8_t PCM_FOLLOW_DISTANCE = 0;
+uint8_t LOW_SPEED_LOCKOUT = 0;
+bool ACC_FAULTED = false;
 
 // --- Smoothing Parameters ---
 const int numReadings = 160;
@@ -37,8 +37,12 @@ int spd = 0;
 unsigned long lastmillis = 0;
 
 // --- CAN IDs to Monitor ---
-const uint16_t monitoredIDs[] = {0x608, 0x37, 0x610}; // IDs to monitor
+const uint16_t monitoredIDs[] = {0x608, 0x37, 0x260, 0x610};
 const int idCount = sizeof(monitoredIDs) / sizeof(monitoredIDs[0]);
+
+// --- Timer Variables for Regular Intervals ---
+unsigned long lastSendTime = 0;
+const unsigned long sendInterval = 50; // Interval in milliseconds
 
 void rpm() {
   half_revolutions++;
@@ -104,24 +108,66 @@ void loop() {
 
   for (int i = 0; i < 4; i++) lastButtonStates[i] = buttonStates[i];
 
-  // --- CAN-Nachrichten senden ---
-  sendPCM_CRUISE();
-  sendPCM_CRUISE_2();
-  sendWHEEL_SPEEDS();
-  sendLIGHT_STALK();
-  sendBLINKERS_STATE();
-  sendBODY_CONTROL_STATE();
-  sendBODY_CONTROL_STATE_2();
-  sendESP_CONTROL();
-  sendBRAKE_MODULE();
-  sendPCM_CRUISE_SM();
-  sendVSC1S07();
-  sendENGINE_RPM();
-  sendGEAR_PACKET();
-  sendPRE_COLLISION_2();
+  // --- Nachrichten in Intervallen senden ---
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastSendTime >= sendInterval) {
+    sendCANMessages();
+    lastSendTime = currentMillis;
+  }
 
   // --- Überwachung der CAN-Nachrichten ---
   monitorCANMessages();
+}
+
+// --- Nachrichten senden ---
+void sendCANMessages() {
+  sendPCM_CRUISE();
+  waitForCANReady();
+  
+  sendPCM_CRUISE_2();
+  waitForCANReady();
+  
+  sendWHEEL_SPEEDS();
+  waitForCANReady();
+  
+  sendLIGHT_STALK();
+  waitForCANReady();
+  
+  sendBLINKERS_STATE();
+  waitForCANReady();
+  
+  sendBODY_CONTROL_STATE();
+  waitForCANReady();
+  
+  sendBODY_CONTROL_STATE_2();
+  waitForCANReady();
+  
+  sendESP_CONTROL();
+  waitForCANReady();
+  
+  sendBRAKE_MODULE();
+  waitForCANReady();
+  
+  sendPCM_CRUISE_SM();
+  waitForCANReady();
+  
+  sendVSC1S07();
+  waitForCANReady();
+  
+  sendENGINE_RPM();
+  waitForCANReady();
+  
+  sendGEAR_PACKET();
+  waitForCANReady();
+  
+  sendPRE_COLLISION_2();
+}
+
+// --- Warten, bis der CAN-Bus bereit ist ---
+void waitForCANReady() {
+  while (!CAN.availableForWrite()) {
+    // Aktiv warten, bis der CAN-Bus bereit ist
+  }
 }
 
 void monitorCANMessages() {
