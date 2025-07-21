@@ -137,9 +137,38 @@ void monitorCANMessages() {
 
 // --- Nachrichtenfunktionen ---
 void sendPCM_CRUISE() {
-  uint8_t dat_1d2[8] = { (OP_ON << 5) | (GAS_RELEASED << 4), 0, 0, 0, 0, 0, (OP_ON << 7), 0 };
-  dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);
-  CAN.beginPacket(0x1D2); for (int i = 0; i < 8; i++) CAN.write(dat_1d2[i]); CAN.endPacket();
+  // Werte für die Signale setzen
+  bool gas_released = GAS_RELEASED;  // GAS_RELEASED Signal
+  bool cruise_active = OP_ON;       // CRUISE_ACTIVE Signal
+  bool acc_braking = false;         // Beispielwert für ACC_BRAKING (kann angepasst werden)
+  uint16_t accel_net = 0;           // Beispielwert für ACCEL_NET (kann angepasst werden)
+  int16_t neutral_force = 0;        // Beispielwert für NEUTRAL_FORCE (kann angepasst werden)
+  uint8_t cruise_state = 3;         // Beispielwert für CRUISE_STATE (kann angepasst werden)
+  bool cancel_req = false;          // Beispielwert für CANCEL_REQ (kann angepasst werden)
+
+  // Nachricht zusammenstellen
+  uint8_t dat_1d2[8] = {0};
+
+  // Bits setzen
+  dat_1d2[0] |= (gas_released << 4);                // GAS_RELEASED bei Bit 4
+  dat_1d2[0] |= (cruise_active << 5);               // CRUISE_ACTIVE bei Bit 5
+  dat_1d2[1] |= (acc_braking << 4);                 // ACC_BRAKING bei Bit 12
+  dat_1d2[2] = accel_net >> 8;                      // ACCEL_NET (MSB)
+  dat_1d2[3] = accel_net & 0xFF;                    // ACCEL_NET (LSB)
+  dat_1d2[4] = neutral_force >> 8;                  // NEUTRAL_FORCE (MSB)
+  dat_1d2[5] = neutral_force & 0xFF;                // NEUTRAL_FORCE (LSB)
+  dat_1d2[6] |= (cancel_req << 1);                  // CANCEL_REQ bei Bit 49
+  dat_1d2[6] |= (cruise_state & 0x0F);              // CRUISE_STATE bei Bits 55-58
+
+  // Checksumme berechnen
+  dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);     // CHECKSUM
+
+  // Nachricht senden
+  CAN.beginPacket(0x1D2);
+  for (int i = 0; i < 8; i++) {
+    CAN.write(dat_1d2[i]);
+  }
+  CAN.endPacket();
 }
 
 void sendPCM_CRUISE_2() {
