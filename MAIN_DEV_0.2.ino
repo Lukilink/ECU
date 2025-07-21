@@ -37,7 +37,7 @@ int spd = 0;
 unsigned long lastmillis = 0;
 
 // --- CAN IDs to Monitor ---
-const uint16_t monitoredIDs[] = {0x608, 0x37, 0x260, 0x610};
+const uint16_t monitoredIDs[] = {0x262, 0x25, 0x260};
 const int idCount = sizeof(monitoredIDs) / sizeof(monitoredIDs[0]);
 
 // --- Timer Variables for Regular Intervals ---
@@ -254,61 +254,61 @@ void sendWHEEL_SPEEDS() {
     dat_170[i * 2] = ws_kph >> 8;
     dat_170[i * 2 + 1] = ws_kph & 0xFF;
   }
-  CAN.beginPacket(0x170); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
+  CAN.beginPacket(0xAA); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
 }
 
 void sendLIGHT_STALK() {
   uint8_t dat_1570[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00}; // Simuliert: Abblendlicht, Tagfahrlicht
-  CAN.beginPacket(0x1570); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
+  CAN.beginPacket(0x622); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
 }
 
 void sendBLINKERS_STATE() {
   uint8_t dat_1556[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (blinker_left << 1) | blinker_right};
-  CAN.beginPacket(0x1556); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
+  CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
 }
 
 void sendBODY_CONTROL_STATE() {
   uint8_t dat_1568[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine offenen Türen, kein Parken
-  CAN.beginPacket(0x1568); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
+  CAN.beginPacket(0x620); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
 }
 
 void sendBODY_CONTROL_STATE_2() {
   uint8_t dat_1552[8] = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}; // Simuliert: Helligkeit auf Maximum
-  CAN.beginPacket(0x1552); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
+  CAN.beginPacket(0x610); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
 }
 
 void sendESP_CONTROL() {
   uint8_t dat_951[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Standard ESP-Zustand
-  CAN.beginPacket(0x951); for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); CAN.endPacket();
+  CAN.beginPacket(0x3B7); for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); CAN.endPacket();
 }
 
 void sendBRAKE_MODULE() {
   uint8_t dat_548[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine Bremse gedrückt
-  CAN.beginPacket(0x548); for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); CAN.endPacket();
+  CAN.beginPacket(0x224); for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); CAN.endPacket();
 }
 
 void sendPCM_CRUISE_SM() {
   uint8_t dat_921[8] = {0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Tempomat aktiv
-  CAN.beginPacket(0x921); for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); CAN.endPacket();
+  CAN.beginPacket(0x399); for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); CAN.endPacket();
 }
 
 void sendVSC1S07() {
   uint8_t dat_800[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Stabilisierungsmodus
-  CAN.beginPacket(0x800); for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); CAN.endPacket();
+  CAN.beginPacket(0x320); for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); CAN.endPacket();
 }
 
 void sendENGINE_RPM() {
   uint16_t rpm = 3000; // 3000 U/min
   uint8_t dat_452[8] = {rpm >> 8, rpm & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  CAN.beginPacket(0x452); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
+  CAN.beginPacket(0x1C4); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
 }
 
 void sendGEAR_PACKET() {
   uint8_t dat_956[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; // Simuliert: Gang eingelegt
-  CAN.beginPacket(0x956); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
+  CAN.beginPacket(0x3BC); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
 }
 
 void sendPRE_COLLISION_2() {
   uint8_t dat_836[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Normalzustand
-  CAN.beginPacket(0x836); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
+  CAN.beginPacket(0x344); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
 }
