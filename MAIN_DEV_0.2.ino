@@ -33,6 +33,10 @@ volatile int half_revolutions = 0;
 int spd = 0;
 unsigned long lastmillis = 0;
 
+// --- CAN IDs to Monitor ---
+const uint16_t monitoredIDs[] = {0x608, 0x37, 0x610}; // IDs to monitor
+const int idCount = sizeof(monitoredIDs) / sizeof(monitoredIDs[0]);
+
 void rpm() {
   half_revolutions++;
 }
@@ -54,6 +58,8 @@ void setup() {
   pinMode(BlinkerPinLeft, INPUT_PULLUP);
   pinMode(BlinkerPinRight, INPUT_PULLUP);
   pinMode(ClutchSwitchPin, INPUT);
+
+  Serial.println("Monitoring CAN messages...");
 }
 
 void loop() {
@@ -110,6 +116,23 @@ void loop() {
   sendENGINE_RPM();
   sendGEAR_PACKET();
   sendPRE_COLLISION_2();
+
+  // --- Überwachung der CAN-Nachrichten ---
+  monitorCANMessages();
+}
+
+void monitorCANMessages() {
+  while (CAN.available()) {
+    uint16_t messageID = CAN.packetId();
+    for (int i = 0; i < idCount; i++) {
+      if (messageID == monitoredIDs[i]) {
+        Serial.print("Message detected on CAN bus: ID 0x");
+        Serial.println(messageID, HEX);
+        break;
+      }
+    }
+    CAN.read(); // Read the message to clear it from the buffer
+  }
 }
 
 // --- Nachrichtenfunktionen ---
