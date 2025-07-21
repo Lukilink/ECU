@@ -57,6 +57,26 @@ uint8_t dbc_checksum(uint8_t *data, uint8_t len, uint16_t addr) {
   return checksum;
 }
 
+// --- Funktionsdeklarationen ---
+void sendCANMessages();
+void monitorCANMessages();
+
+void sendPCM_CRUISE();
+void sendPCM_CRUISE_2();
+void sendWHEEL_SPEEDS();
+void sendLIGHT_STALK();
+void sendBLINKERS_STATE();
+void sendBODY_CONTROL_STATE();
+void sendBODY_CONTROL_STATE_2();
+void sendESP_CONTROL();
+void sendBRAKE_MODULE();
+void sendPCM_CRUISE_SM();
+void sendVSC1S07();
+void sendENGINE_RPM();
+void sendGEAR_PACKET();
+void sendPRE_COLLISION_2();
+
+
 void setup() {
   Serial.begin(9600);
   CAN.begin(500E3);
@@ -124,6 +144,9 @@ void loop() {
 
   // --- Überwachung der CAN-Nachrichten ---
   monitorCANMessages();
+
+  Serial.println("Loop running...");
+  delay(100);
 }
 
 // --- Nachrichten senden ---
@@ -198,14 +221,6 @@ void sendPCM_CRUISE() {
 
   // Checksumme berechnen
   dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);     // CHECKSUM
-
-  // Nachricht senden
-  CAN.beginPacket(0x1D2);
-  for (int i = 0; i < 8; i++) {
-    CAN.write(dat_1d2[i]);
-  }
-  CAN.endPacket();
-}
 
   // Nachricht senden
   CAN.beginPacket(0x1D2);
