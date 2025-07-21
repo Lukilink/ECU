@@ -54,6 +54,10 @@ uint8_t distance_lines = 2;                 // Simulating 2 distance lines (norm
 bool temp_acc_faulted = false;              // Simulating no ACC fault
 uint8_t ui_set_speed = 100;                 // Simulated set speed (e.g., 100 km/h)
 
+// --- ENGINE_RPM Variables ---
+uint16_t engine_rpm = 3000;                 // Simulated fixed engine RPM (e.g., 3000 rpm)
+bool engine_running = true;                 // Simulated engine running state
+
 const int numReadings = 160;
 float readings[numReadings] = {0};
 int readIndex = 0;
@@ -132,15 +136,14 @@ void loop() {
   dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
   CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
 
-  // PCM_CRUISE_SM (0x921)
-  uint8_t dat_921[8] = {0};
-  dat_921[0] = (MAIN_ON << 4); // Encode MAIN_ON
-  dat_921[1] = (cruise_control_state << 3); // Encode CRUISE_CONTROL_STATE
-  dat_921[1] |= (distance_lines << 6); // Encode DISTANCE_LINES
-  dat_921[1] |= (temp_acc_faulted << 7); // Encode TEMP_ACC_FAULTED
-  dat_921[3] = ui_set_speed; // Encode UI_SET_SPEED
-  dat_921[7] = dbc_checksum(dat_921, 7, 0x921); // Calculate checksum
-  CAN.beginPacket(0x921); for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); CAN.endPacket();
+  // ENGINE_RPM (0x452)
+  uint8_t dat_452[8] = {0};
+  uint16_t scaled_rpm = engine_rpm / 0.78125; // Scale RPM value according to signal factor
+  dat_452[0] = (scaled_rpm >> 8) & 0xFF;     // High 8 bits of RPM
+  dat_452[1] = scaled_rpm & 0xFF;            // Low 8 bits of RPM
+  dat_452[3] = (engine_running << 3);        // Encode ENGINE_RUNNING
+  dat_452[7] = dbc_checksum(dat_452, 7, 0x452); // Calculate checksum
+  CAN.beginPacket(0x452); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
 
   // Other CAN messages (unchanged)
   // ...
