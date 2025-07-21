@@ -31,6 +31,15 @@ bool low_beam = true;      // Simulating normal light on
 bool high_beam = false;
 bool daytime_running_light = true; // Simulating normal light on
 
+// --- Body Control State Variables ---
+bool meter_dimmed = false;                  // METER_DIMMED
+bool parking_brake = false;                 // PARKING_BRAKE
+bool seatbelt_driver_unlatched = false;     // SEATBELT_DRIVER_UNLATCHED
+bool door_open_fl = false;                  // Front Left Door
+bool door_open_rl = false;                  // Rear Left Door
+bool door_open_rr = false;                  // Rear Right Door
+bool door_open_fr = false;                  // Front Right Door
+
 // --- Smoothing Parameters ---
 const int numReadings = 160;
 float readings[numReadings] = {0};
@@ -136,4 +145,12 @@ void loop() {
   dat_1570[3] = (auto_high_beam << 5) | (front_fog << 3) | (parking_light << 4) | (low_beam << 5) | (high_beam << 6) | (daytime_running_light << 7);
   dat_1570[7] = dbc_checksum(dat_1570, 7, 0x1570); // Calculate checksum
   CAN.beginPacket(0x1570); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
+
+  // BODY_CONTROL_STATE (0x1568)
+  uint8_t dat_1568[8] = {0};
+  dat_1568[5] = (meter_dimmed << 6); // Encode METER_DIMMED
+  dat_1568[6] = (door_open_rl << 2) | (door_open_rr << 1) | (door_open_fr); // Encode DOOR_OPEN_RL, DOOR_OPEN_RR, DOOR_OPEN_FR
+  dat_1568[7] = (parking_brake << 4) | (seatbelt_driver_unlatched << 6) | (door_open_fl << 5); // Encode PARKING_BRAKE, SEATBELT_DRIVER_UNLATCHED, DOOR_OPEN_FL
+  dat_1568[7] = dbc_checksum(dat_1568, 7, 0x1568); // Calculate checksum
+  CAN.beginPacket(0x1568); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
 } // loop
