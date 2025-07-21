@@ -24,6 +24,12 @@ bool BRAKE_PRESSED = false;
 bool GAS_RELEASED = true;
 bool hazard_light = false; // Hazard light state
 uint8_t turn_signals = 0;  // 0: None, 1: Left, 2: Right, 3: Hazard
+bool auto_high_beam = false;
+bool front_fog = false;
+bool parking_light = true; // Simulating normal light on
+bool low_beam = true;      // Simulating normal light on
+bool high_beam = false;
+bool daytime_running_light = true; // Simulating normal light on
 
 // --- Smoothing Parameters ---
 const int numReadings = 160;
@@ -124,4 +130,10 @@ void loop() {
   dat_1556[2] = blinker_left || blinker_right;              // Encode BLINKER_BUTTON_PRESSED
   dat_1556[7] = dbc_checksum(dat_1556, 7, 0x1556);          // Calculate checksum
   CAN.beginPacket(0x1556); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
+
+  // LIGHT_STALK (0x1570)
+  uint8_t dat_1570[8] = {0};
+  dat_1570[3] = (auto_high_beam << 5) | (front_fog << 3) | (parking_light << 4) | (low_beam << 5) | (high_beam << 6) | (daytime_running_light << 7);
+  dat_1570[7] = dbc_checksum(dat_1570, 7, 0x1570); // Calculate checksum
+  CAN.beginPacket(0x1570); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
 } // loop
