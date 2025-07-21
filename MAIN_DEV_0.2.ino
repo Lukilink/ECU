@@ -57,6 +57,7 @@ void setup() {
 }
 
 void loop() {
+  // --- Geschwindigkeit berechnen ---
   if (half_revolutions >= 1) {
     noInterrupts();
     unsigned long now = micros();
@@ -67,17 +68,20 @@ void loop() {
     interrupts();
   }
 
+  // --- Geschwindigkeit glätten ---
   total -= readings[readIndex];
   readings[readIndex] = spd;
   total += readings[readIndex];
   readIndex = (readIndex + 1) % numReadings;
   average = total / numReadings;
 
+  // --- Status der Tasten und Blinker ---
   clutchPressed = digitalRead(ClutchSwitchPin) == LOW;
   for (int i = 0; i < 4; i++) buttonStates[i] = digitalRead(buttonPins[i]);
   blinker_left = !digitalRead(BlinkerPinLeft);
   blinker_right = !digitalRead(BlinkerPinRight);
 
+  // --- OP Logik ---
   if (BRAKE_PRESSED || !GAS_RELEASED) OP_ON = false;
 
   if (buttonStates[3] != lastButtonStates[3] && buttonStates[3] == LOW) {
@@ -91,17 +95,38 @@ void loop() {
 
   for (int i = 0; i < 4; i++) lastButtonStates[i] = buttonStates[i];
 
-  // PCM_CRUISE (0x1D2)
+  // --- CAN-Nachrichten senden ---
+  sendPCM_CRUISE();
+  sendPCM_CRUISE_2();
+  sendWHEEL_SPEEDS();
+  sendSTEERING_IPAS();
+  sendLIGHT_STALK();
+  sendBLINKERS_STATE();
+  sendBODY_CONTROL_STATE();
+  sendBODY_CONTROL_STATE_2();
+  sendESP_CONTROL();
+  sendBRAKE_MODULE();
+  sendPCM_CRUISE_SM();
+  sendVSC1S07();
+  sendENGINE_RPM();
+  sendGEAR_PACKET();
+  sendPRE_COLLISION_2();
+}
+
+// --- Nachrichtenfunktionen ---
+void sendPCM_CRUISE() {
   uint8_t dat_1d2[8] = { (OP_ON << 5) | (GAS_RELEASED << 4), 0, 0, 0, 0, 0, (OP_ON << 7), 0 };
   dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);
   CAN.beginPacket(0x1D2); for (int i = 0; i < 8; i++) CAN.write(dat_1d2[i]); CAN.endPacket();
+}
 
-  // PCM_CRUISE_2 (0x1D3)
+void sendPCM_CRUISE_2() {
   uint8_t dat_1d3[8] = { 0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0 };
   dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
   CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
+}
 
-  // WHEEL_SPEEDS (0x170)
+void sendWHEEL_SPEEDS() {
   uint16_t ws_kph = (uint16_t)(average * 100);
   uint8_t dat_170[8];
   for (int i = 0; i < 4; i++) {
@@ -109,80 +134,66 @@ void loop() {
     dat_170[i * 2 + 1] = ws_kph & 0xFF;
   }
   CAN.beginPacket(0x170); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
+}
 
-  // STEERING_IPAS (0x614)
+void sendSTEERING_IPAS() {
   uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
   dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
   CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
+}
 
-  // LIGHT_STALK (0x1570)
-  uint8_t dat_1570[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (0x01 << 2), 0x00}; // Simulated Data
-  CAN.beginPacket(0x1570);
-  for (int i=0; !CAN_END());
-Hier fehlte ein Teil des Codes. Lass mich den vollständigen Code mit den gewünschten CAN-Nachrichten fertigstellen:
+void sendLIGHT_STALK() {
+  uint8_t dat_1570[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00}; // Simuliert: Abblendlicht, Tagfahrlicht
+  CAN.beginPacket(0x1570); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
+}
 
-```cpp
-  for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); 
-  CAN.endPacket();
+void sendBLINKERS_STATE() {
+  uint8_t dat_1556[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (blinker_left << 1) | blinker_right};
+  CAN.beginPacket(0x1556); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
+}
 
-  // BLINKERS_STATE (0x1556)
-  uint8_t dat_1556[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (blinker_left << 1) | (blinker_right)};
-  CAN.beginPacket(0x1556);
-  for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); 
-  CAN.endPacket();
+void sendBODY_CONTROL_STATE() {
+  uint8_t dat_1568[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine offenen Türen, kein Parken
+  CAN.beginPacket(0x1568); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
+}
 
-  // BODY_CONTROL_STATE (0x1568)
-  uint8_t dat_1568[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simulated normal driving state
-  CAN.beginPacket(0x1568);
-  for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); 
-  CAN.endPacket();
+void sendBODY_CONTROL_STATE_2() {
+  uint8_t dat_1552[8] = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}; // Simuliert: Helligkeit auf Maximum
+  CAN.beginPacket(0x1552); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
+}
 
-  // BODY_CONTROL_STATE_2 (0x1552)
-  uint8_t dat_1552[8] = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}; // Simulating brightness and units
-  CAN.beginPacket(0x1552);
-  for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); 
-  CAN.endPacket();
+void sendESP_CONTROL() {
+  uint8_t dat_951[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Standard ESP-Zustand
+  CAN.beginPacket(0x951); for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); CAN.endPacket();
+}
 
-  // ESP_CONTROL (0x951)
-  uint8_t dat_951[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simulated standard ESP state
-  CAN.beginPacket(0x951);
-  for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); 
-  CAN.endPacket();
+void sendBRAKE_MODULE() {
+  uint8_t dat_548[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine Bremse gedrückt
+  CAN.beginPacket(0x548); for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); CAN.endPacket();
+}
 
-  // BRAKE_MODULE (0x548)
-  uint8_t dat_548[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Brake not pressed, no pressure
-  CAN.beginPacket(0x548);
-  for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); 
-  CAN.endPacket();
+void sendPCM_CRUISE_SM() {
+  uint8_t dat_921[8] = {0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Tempomat aktiv
+  CAN.beginPacket(0x921); for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); CAN.endPacket();
+}
 
-  // PCM_CRUISE_SM (0x921)
-  uint8_t dat_921[8] = {0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00}; // Normal cruise state
-  CAN.beginPacket(0x921);
-  for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); 
-  CAN.endPacket();
+void sendVSC1S07() {
+  uint8_t dat_800[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Stabilisierungsmodus
+  CAN.beginPacket(0x800); for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); CAN.endPacket();
+}
 
-  // VSC1S07 (0x800)
-  uint8_t dat_800[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Standard stability control state
-  CAN.beginPacket(0x800);
-  for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); 
-  CAN.endPacket();
-
-  // ENGINE_RPM (0x452)
-  uint16_t rpm = 3000; // 3000 RPM
+void sendENGINE_RPM() {
+  uint16_t rpm = 3000; // 3000 U/min
   uint8_t dat_452[8] = {rpm >> 8, rpm & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  CAN.beginPacket(0x452);
-  for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); 
-  CAN.endPacket();
+  CAN.beginPacket(0x452); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
+}
 
-  // GEAR_PACKET (0x956)
-  uint8_t dat_956[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; // Drive engaged
-  CAN.beginPacket(0x956);
-  for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); 
-  CAN.endPacket();
+void sendGEAR_PACKET() {
+  uint8_t dat_956[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; // Simuliert: Gang eingelegt
+  CAN.beginPacket(0x956); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
+}
 
-  // PRE_COLLISION_2 (0x836)
-  uint8_t dat_836[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Normal state
-  CAN.beginPacket(0x836);
-  for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); 
-  CAN.endPacket();
+void sendPRE_COLLISION_2() {
+  uint8_t dat_836[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Normalzustand
+  CAN.beginPacket(0x836); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
 }
