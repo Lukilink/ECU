@@ -21,6 +21,9 @@ bool blinker_left = false;
 bool blinker_right = false;
 bool BRAKE_PRESSED = false;
 bool GAS_RELEASED = true;
+uint8_t PCM_FOLLOW_DISTANCE = 0;   // PCM_FOLLOW_DISTANCE Signal
+uint8_t LOW_SPEED_LOCKOUT = 0;     // LOW_SPEED_LOCKOUT Signal
+bool ACC_FAULTED = false;          // ACC_FAULTED Signal
 
 // --- Smoothing Parameters ---
 const int numReadings = 160;
@@ -172,9 +175,23 @@ void sendPCM_CRUISE() {
 }
 
 void sendPCM_CRUISE_2() {
-  uint8_t dat_1d3[8] = { 0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0 };
+  uint8_t dat_1d3[8] = {0};
+
+  // Signale gemäß DBC setzen
+  dat_1d3[0] |= BRAKE_PRESSED << 3;                     // BRAKE_PRESSED bei Bit 3
+  dat_1d3[1] |= (PCM_FOLLOW_DISTANCE & 0x03) << 4;      // PCM_FOLLOW_DISTANCE bei Bits 12-13
+  dat_1d3[1] |= (LOW_SPEED_LOCKOUT & 0x03) << 6;        // LOW_SPEED_LOCKOUT bei Bits 14-15
+  dat_1d3[1] |= MAIN_ON << 7;                           // MAIN_ON bei Bit 15
+  dat_1d3[2] = set_speed;                               // SET_SPEED bei Byte 2
+  dat_1d3[5] |= ACC_FAULTED << 7;                       // ACC_FAULTED bei Bit 47
+
+  // Checksumme berechnen
   dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
-  CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
+
+  // Nachricht senden
+  CAN.beginPacket(0x1D3);
+  for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]);
+  CAN.endPacket();
 }
 
 void sendWHEEL_SPEEDS() {
