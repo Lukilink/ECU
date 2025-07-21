@@ -137,40 +137,44 @@ void monitorCANMessages() {
 
 // --- Nachrichtenfunktionen ---
 void sendPCM_CRUISE() {
-  uint8_t dat_1d2[8] = { (OP_ON << 5) | (GAS_RELEASED << 4), 0, 0, 0, 0, 0, (OP_ON << 7), 0 };
-  dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);
-  CAN.beginPacket(0x1D2); for (int i = 0; i < 8; i++) CAN.write(dat_1d2[i]); CAN.endPacket();
+  // Werte für die Signale setzen
+  bool gas_released = GAS_RELEASED;  // GAS_RELEASED Signal
+  bool cruise_active = OP_ON;       // CRUISE_ACTIVE Signal
+  bool acc_braking = false;         // Beispielwert für ACC_BRAKING (kann angepasst werden)
+  uint16_t accel_net = 0;           // Beispielwert für ACCEL_NET (kann angepasst werden)
+  int16_t neutral_force = 0;        // Beispielwert für NEUTRAL_FORCE (kann angepasst werden)
+  uint8_t cruise_state = 3;         // Beispielwert für CRUISE_STATE (kann angepasst werden)
+  bool cancel_req = false;          // Beispielwert für CANCEL_REQ (kann angepasst werden)
+
+  // Nachricht zusammenstellen
+  uint8_t dat_1d2[8] = {0};
+
+  // Bits setzen
+  dat_1d2[0] |= (gas_released << 4);                // GAS_RELEASED bei Bit 4
+  dat_1d2[0] |= (cruise_active << 5);               // CRUISE_ACTIVE bei Bit 5
+  dat_1d2[1] |= (acc_braking << 4);                 // ACC_BRAKING bei Bit 12
+  dat_1d2[2] = accel_net >> 8;                      // ACCEL_NET (MSB)
+  dat_1d2[3] = accel_net & 0xFF;                    // ACCEL_NET (LSB)
+  dat_1d2[4] = neutral_force >> 8;                  // NEUTRAL_FORCE (MSB)
+  dat_1d2[5] = neutral_force & 0xFF;                // NEUTRAL_FORCE (LSB)
+  dat_1d2[6] |= (cancel_req << 1);                  // CANCEL_REQ bei Bit 49
+  dat_1d2[6] |= (cruise_state & 0x0F);              // CRUISE_STATE bei Bits 55-58
+
+  // Checksumme berechnen
+  dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);     // CHECKSUM
+
+  // Nachricht senden
+  CAN.beginPacket(0x1D2);
+  for (int i = 0; i < 8; i++) {
+    CAN.write(dat_1d2[i]);
+  }
+  CAN.endPacket();
 }
 
 void sendPCM_CRUISE_2() {
-  // Werte für die Signale setzen
-  bool brake_pressed = BRAKE_PRESSED;   // BRAKE_PRESSED Signal, basierend auf der existierenden Logik
-  uint8_t pcm_follow_distance = 2;     // Beispielwert für PCM_FOLLOW_DISTANCE (kann angepasst werden)
-  uint8_t low_speed_lockout = 1;       // Beispielwert für LOW_SPEED_LOCKOUT (kann angepasst werden)
-  bool main_on = MAIN_ON;              // MAIN_ON Signal
-  uint8_t set_speed = ::set_speed;     // SET_SPEED Signal, basierend auf der existierenden Logik
-  bool acc_faulted = false;            // Beispielwert für ACC_FAULTED (kann angepasst werden)
-
-  // Nachricht zusammenstellen
-  uint8_t dat_1d3[8] = {0};
-
-  // Bits setzen
-  dat_1d3[0] |= (brake_pressed << 3);               // BRAKE_PRESSED bei Bit 3
-  dat_1d3[1] |= (pcm_follow_distance << 4);         // PCM_FOLLOW_DISTANCE bei Bits 12-13
-  dat_1d3[1] |= (low_speed_lockout << 6);           // LOW_SPEED_LOCKOUT bei Bits 14-15
-  dat_1d3[1] |= (main_on << 7);                     // MAIN_ON bei Bit 15
-  dat_1d3[2] = set_speed;                           // SET_SPEED bei Bits 23-30
-  dat_1d3[5] |= (acc_faulted << 7);                 // ACC_FAULTED bei Bit 47
-
-  // Checksumme berechnen
-  dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);     // CHECKSUM
-
-  // Nachricht senden
-  CAN.beginPacket(0x1D3);
-  for (int i = 0; i < 8; i++) {
-    CAN.write(dat_1d3[i]);
-  }
-  CAN.endPacket();
+  uint8_t dat_1d3[8] = { 0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0 };
+  dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
+  CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
 }
 
 void sendWHEEL_SPEEDS() {
@@ -183,4 +187,58 @@ void sendWHEEL_SPEEDS() {
   CAN.beginPacket(0x170); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
 }
 
-// Die restlichen Funktionen bleiben gleich...
+void sendLIGHT_STALK() {
+  uint8_t dat_1570[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00}; // Simuliert: Abblendlicht, Tagfahrlicht
+  CAN.beginPacket(0x1570); for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); CAN.endPacket();
+}
+
+void sendBLINKERS_STATE() {
+  uint8_t dat_1556[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (blinker_left << 1) | blinker_right};
+  CAN.beginPacket(0x1556); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
+}
+
+void sendBODY_CONTROL_STATE() {
+  uint8_t dat_1568[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine offenen Türen, kein Parken
+  CAN.beginPacket(0x1568); for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); CAN.endPacket();
+}
+
+void sendBODY_CONTROL_STATE_2() {
+  uint8_t dat_1552[8] = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}; // Simuliert: Helligkeit auf Maximum
+  CAN.beginPacket(0x1552); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
+}
+
+void sendESP_CONTROL() {
+  uint8_t dat_951[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Standard ESP-Zustand
+  CAN.beginPacket(0x951); for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); CAN.endPacket();
+}
+
+void sendBRAKE_MODULE() {
+  uint8_t dat_548[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Keine Bremse gedrückt
+  CAN.beginPacket(0x548); for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); CAN.endPacket();
+}
+
+void sendPCM_CRUISE_SM() {
+  uint8_t dat_921[8] = {0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Tempomat aktiv
+  CAN.beginPacket(0x921); for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); CAN.endPacket();
+}
+
+void sendVSC1S07() {
+  uint8_t dat_800[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Stabilisierungsmodus
+  CAN.beginPacket(0x800); for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); CAN.endPacket();
+}
+
+void sendENGINE_RPM() {
+  uint16_t rpm = 3000; // 3000 U/min
+  uint8_t dat_452[8] = {rpm >> 8, rpm & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  CAN.beginPacket(0x452); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
+}
+
+void sendGEAR_PACKET() {
+  uint8_t dat_956[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; // Simuliert: Gang eingelegt
+  CAN.beginPacket(0x956); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
+}
+
+void sendPRE_COLLISION_2() {
+  uint8_t dat_836[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simuliert: Normalzustand
+  CAN.beginPacket(0x836); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
+}
