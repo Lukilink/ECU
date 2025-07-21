@@ -67,6 +67,14 @@ bool econ_on = false;                       // ECON_ON: Off
 bool b_gear_engaged = false;                // B_GEAR_ENGAGED: Off
 bool drive_engaged = true;                  // DRIVE_ENGAGED: On
 
+// --- PRE_COLLISION_2 Variables ---
+uint16_t dss1gdrv = 0;                      // DSS1GDRV: Simulated 0 m/s^2
+bool pcsalm = false;                        // PCSALM: Alarm off
+bool ibtrgr = false;                        // IBTRGR: Not triggered
+uint8_t pbatrgr = 0;                        // PBATRGR: Not triggered
+bool prefill = false;                       // PREFILL: Off
+bool avstrgr = false;                       // AVSTRGR: Not triggered
+
 const int numReadings = 160;
 float readings[numReadings] = {0};
 int readIndex = 0;
@@ -145,14 +153,15 @@ void loop() {
   dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
   CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
 
-  // GEAR_PACKET (0x956)
-  uint8_t dat_956[8] = {0};
-  dat_956[0] = (sport_on << 2);             // Encode SPORT_ON
-  dat_956[1] = (gear & 0x3F) << 2;          // Encode GEAR (6 bits)
-  dat_956[4] = (sport_gear_on << 1) | (sport_gear << 2) | (econ_on << 4) | (b_gear_engaged << 5); // SPORT_GEAR_ON, SPORT_GEAR, ECON_ON, B_GEAR_ENGAGED
-  dat_956[5] = (drive_engaged << 7);        // Encode DRIVE_ENGAGED
-  dat_956[7] = dbc_checksum(dat_956, 7, 0x956); // Calculate checksum
-  CAN.beginPacket(0x956); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
+  // PRE_COLLISION_2 (0x836)
+  uint8_t dat_836[8] = {0};
+  uint16_t scaled_dss1gdrv = (uint16_t)(dss1gdrv / 0.1); // Scale DSS1GDRV
+  dat_836[0] = (scaled_dss1gdrv >> 2) & 0xFF;            // High 10 bits of DSS1GDRV
+  dat_836[1] = (scaled_dss1gdrv & 0x03) << 6;            // Low 2 bits of DSS1GDRV
+  dat_836[2] = (pcsalm << 1) | (ibtrgr << 3);            // Encode PCSALM and IBTRGR
+  dat_836[3] = (pbatrgr << 6) | (prefill << 5) | (avstrgr << 4); // Encode PBATRGR, PREFILL, AVSTRGR
+  dat_836[7] = dbc_checksum(dat_836, 7, 0x836);          // Calculate checksum
+  CAN.beginPacket(0x836); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
 
   // Other CAN messages (unchanged)
   // ...
