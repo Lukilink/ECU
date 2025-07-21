@@ -44,6 +44,9 @@ const int idCount = sizeof(monitoredIDs) / sizeof(monitoredIDs[0]);
 unsigned long lastSendTime = 0;
 const unsigned long sendInterval = 50; // Interval in milliseconds
 
+// --- Timer Variable for Smoothing ---
+static unsigned long lastUpdate = 0; // Timer for smoothing
+
 void rpm() {
   half_revolutions++;
 }
@@ -81,12 +84,16 @@ void loop() {
     interrupts();
   }
 
-  // --- Geschwindigkeit glätten ---
-  total -= readings[readIndex];
-  readings[readIndex] = spd;
-  total += readings[readIndex];
-  readIndex = (readIndex + 1) % numReadings;
-  average = total / numReadings;
+  // --- Geschwindigkeit glätten alle 10 ms ---
+  if (millis() - lastUpdate > 10) { // Alle 10 ms
+    total -= readings[readIndex];
+    readings[readIndex] = spd;
+    total += readings[readIndex];
+    readIndex = (readIndex + 1) % numReadings;
+    average = total / numReadings;
+
+    lastUpdate = millis();
+  }
 
   // --- Status der Tasten und Blinker ---
   clutchPressed = digitalRead(ClutchSwitchPin) == LOW;
