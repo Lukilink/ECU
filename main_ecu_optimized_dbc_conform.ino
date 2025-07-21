@@ -20,7 +20,8 @@ uint8_t set_speed = 0;
 float average = 0.0f;
 bool blinker_left = false;
 bool blinker_right = false;
-bool BRAKE_PRESSED = false;
+bool BRAKE_PRESSED = false; // Simulating brake not pressed
+uint16_t brake_pressure = 10; // Simulating low brake pressure (e.g., 10 out of 4047)
 bool GAS_RELEASED = true;
 bool hazard_light = false; // Hazard light state
 uint8_t turn_signals = 0;  // 0: None, 1: Left, 2: Right, 3: Hazard
@@ -168,4 +169,12 @@ void loop() {
   dat_1552[7] = units; // Encode UNITS
   dat_1552[7] = dbc_checksum(dat_1552, 7, 0x1552); // Calculate checksum
   CAN.beginPacket(0x1552); for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); CAN.endPacket();
+
+  // BRAKE_MODULE (0x548)
+  uint8_t dat_548[8] = {0};
+  dat_548[0] = (BRAKE_PRESSED << 5); // Encode BRAKE_PRESSED
+  dat_548[5] = (brake_pressure >> 4) & 0xFF; // High 8 bits of BRAKE_PRESSURE
+  dat_548[6] = (brake_pressure & 0x0F) << 4; // Low 4 bits of BRAKE_PRESSURE
+  dat_548[7] = dbc_checksum(dat_548, 7, 0x548); // Calculate checksum
+  CAN.beginPacket(0x548); for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); CAN.endPacket();
 } // loop
