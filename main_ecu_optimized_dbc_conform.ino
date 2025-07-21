@@ -22,6 +22,8 @@ bool blinker_left = false;
 bool blinker_right = false;
 bool BRAKE_PRESSED = false;
 bool GAS_RELEASED = true;
+bool hazard_light = false; // Hazard light state
+uint8_t turn_signals = 0;  // 0: None, 1: Left, 2: Right, 3: Hazard
 
 // --- Smoothing Parameters ---
 const int numReadings = 160;
@@ -115,4 +117,11 @@ void loop() {
   uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
   dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
   CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
+
+  // BLINKERS_STATE (0x1556)
+  uint8_t dat_1556[8] = {0};
+  dat_1556[1] = (hazard_light << 3) | (turn_signals & 0x03); // Encode HAZARD_LIGHT and TURN_SIGNALS
+  dat_1556[2] = blinker_left || blinker_right;              // Encode BLINKER_BUTTON_PRESSED
+  dat_1556[7] = dbc_checksum(dat_1556, 7, 0x1556);          // Calculate checksum
+  CAN.beginPacket(0x1556); for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); CAN.endPacket();
 } // loop
