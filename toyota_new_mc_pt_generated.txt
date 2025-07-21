@@ -1,0 +1,115 @@
+VERSION ""
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: ECU DSU STEER IPAS
+
+BO_ 466 PCM_CRUISE: 8 ECU
+ SG_ GAS_RELEASED : 4|1@1+ (1,0) [0|1] "" ECU
+ SG_ CRUISE_ACTIVE : 5|1@1+ (1,0) [0|1] "" ECU
+ SG_ STANDSTILL_ON : 12|1@1+ (1,0) [0|1] "" ECU
+ SG_ ACCEL_NET : 16|16@1- (0.001,0) [-20|20] "m/s2" ECU
+ SG_ CRUISE_STATE : 55|4@1+ (1,0) [0|15] "" ECU
+ SG_ CHECKSUM : 56|8@1+ (1,0) [0|255] "" ECU
+
+BO_ 467 PCM_CRUISE_2: 8 ECU
+ SG_ MAIN_ON : 15|1@1+ (1,0) [0|1] "" ECU
+ SG_ LOW_SPEED_LOCKOUT : 14|2@1+ (1,0) [0|3] "kph" ECU
+ SG_ SET_SPEED : 16|8@1+ (1,0) [0|255] "kph" ECU
+ SG_ CHECKSUM : 56|8@1+ (1,0) [0|255] "" ECU
+
+BO_ 170 WHEEL_SPEEDS: 8 ECU
+ SG_ WHEEL_SPEED_FL : 0|16@1+ (0.01,0) [0|250] "kph" ECU
+ SG_ WHEEL_SPEED_FR : 16|16@1+ (0.01,0) [0|250] "kph" ECU
+ SG_ WHEEL_SPEED_RL : 32|16@1+ (0.01,0) [0|250] "kph" ECU
+ SG_ WHEEL_SPEED_RR : 48|16@1+ (0.01,0) [0|250] "kph" ECU
+
+BO_ 1556 STEERING_LEVERS: 8 ECU
+ SG_ TURN_SIGNALS : 24|8@1+ (1,0) [0|255] "" ECU
+ SG_ LIGHT_STALK : 0|8@1+ (1,0) [0|255] "" ECU
+ SG_ WIPER_STALK : 16|8@1+ (1,0) [0|255] "" ECU
+ SG_ CHECKSUM : 56|8@1+ (1,0) [0|255] "" ECU
+
+BO_ 548 BRAKE_MODULE: 8 DSU
+ SG_ BRAKE_PRESSURE : 0|9@1+ (1,0) [0|511] "" DSU
+ SG_ BRAKE_POSITION : 16|9@1+ (1,0) [0|511] "" DSU
+ SG_ BRAKE_PRESSED : 32|1@1+ (1,0) [0|1] "" DSU
+
+BO_ 705 GAS_PEDAL: 8 ECU
+ SG_ GAS_COMMAND : 0|16@1+ (0.005,0) [0|100] "%" ECU
+ SG_ GAS_COMMAND2 : 16|8@1+ (0.392157,0) [0|100] "%" ECU
+ SG_ GAS_RELEASED : 32|1@1+ (1,0) [0|1] "" ECU
+
+BO_ 1552 STEERING_IPAS: 8 IPAS
+ SG_ STATE : 0|4@1+ (1,0) [0|15] "" IPAS
+ SG_ ANGLE : 8|12@1- (1.5,0) [-600|600] "deg" IPAS
+ SG_ SET_ME_X10 : 16|6@1+ (1,0) [0|63] "" IPAS
+ SG_ SET_ME_X00 : 22|1@1+ (1,0) [0|1] "" IPAS
+ SG_ DIRECTION_CMD : 23|2@1+ (1,0) [0|3] "" IPAS
+ SG_ SET_ME_X40 : 25|7@1+ (1,0) [0|127] "" IPAS
+ SG_ SET_ME_X00_2 : 32|8@1+ (1,0) [0|255] "" IPAS
+ SG_ CHECKSUM : 40|8@1+ (1,0) [0|255] "" IPAS
+
+BO_ 1553 STEERING_IPAS_COMMA: 8 STEER
+ SG_ STATE : 0|4@1+ (1,0) [0|15] "" STEER
+ SG_ ANGLE : 8|12@1- (1.5,0) [-600|600] "deg" STEER
+ SG_ SET_ME_X10 : 16|6@1+ (1,0) [0|63] "" STEER
+ SG_ SET_ME_X00 : 22|1@1+ (1,0) [0|1] "" STEER
+ SG_ DIRECTION_CMD : 23|2@1+ (1,0) [0|3] "" STEER
+ SG_ SET_ME_X40 : 25|7@1+ (1,0) [0|127] "" STEER
+ SG_ LKA_STATE : 31|1@1+ (1,0) [0|1] "" STEER
+ SG_ CHECKSUM : 32|8@1+ (1,0) [0|255] "" STEER
+
+BO_ 1568 SEATS_DOORS: 8 ECU
+ SG_ SEATBELT_DRIVER_UNLATCHED : 62|1@1+ (1,0) [0|1] "" ECU
+ SG_ DOOR_OPEN_FL : 45|1@1+ (1,0) [0|1] "" ECU
+ SG_ DOOR_OPEN_FR : 44|1@1+ (1,0) [0|1] "" ECU
+ SG_ DOOR_OPEN_RL : 43|1@1+ (1,0) [0|1] "" ECU
+ SG_ DOOR_OPEN_RR : 42|1@1+ (1,0) [0|1] "" ECU
+
+BO_ 956 GEAR_PACKET: 8 ECU
+ SG_ GEAR : 13|6@1+ (1,0) [0|63] "" ECU
+
+CM_ SG_ 466 GAS_RELEASED "1 = gas pedal not pressed, 0 = pressed";
+CM_ SG_ 466 CRUISE_ACTIVE "1 = cruise control is active";
+CM_ SG_ 467 MAIN_ON "1 = cruise main button is on";
+CM_ SG_ 467 SET_SPEED "cruise control set speed in kph";
+CM_ SG_ 170 WHEEL_SPEED_FL "front left wheel speed";
+CM_ SG_ 170 WHEEL_SPEED_FR "front right wheel speed";
+CM_ SG_ 170 WHEEL_SPEED_RL "rear left wheel speed";
+CM_ SG_ 170 WHEEL_SPEED_RR "rear right wheel speed";
+CM_ SG_ 548 BRAKE_PRESSED "1 = brake pedal pressed";
+CM_ SG_ 705 GAS_RELEASED "1 = gas pedal not pressed, 0 = pressed";
+CM_ SG_ 1553 LKA_STATE "Lane Keeping Assist state";
+
+VAL_ 466 CRUISE_STATE 8 "STANDSTILL" 7 "ACTIVE" 6 "FAULTED" 5 "OVERRIDE" 4 "STANDBY" 3 "ENABLED" 2 "DISABLED" 1 "FAULT";
+VAL_ 1552 STATE 9 "enabled" 8 "standby" 5 "fault";
+VAL_ 1553 STATE 9 "enabled" 8 "standby" 5 "fault";
+VAL_ 956 GEAR 32 "D" 16 "N" 8 "R" 4 "P";
