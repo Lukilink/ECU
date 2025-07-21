@@ -1,155 +1,87 @@
-// GAS - DONT USE ON PUBLIC ROAD
-
-//________________import can libary https://github.com/sandeepmistry/arduino-CAN
+// GAS PEDAL CONTROL UNIT - DO NOT USE ON PUBLIC ROADS
 #include <CAN.h>
 
-//________________this values needs to be define for each car
-int PERM_ERROR = 8; //will allow a diffrence between targetPressure and currentPressure
-int minPot = 86; //measured at actuators lowest position
-int maxPot = 920; //measured at actuators highest position
-float maxACC_CMD = 1500; //the max Value which comes from OP on CAN ID 0x200
-float minACC_CMD = 475; //the min Value which comes from OP on CAN ID 0x200
-int user_input_threshold = 150; // threshold to trigger user gas_press (potiPossition >= tagetposition + user_input_threshold)
+//__________ CONFIGURATION VALUES
+const int PERM_ERROR = 8;                   // Allowed position error
+const int minPot = 86;                      // Minimum potentiometer reading
+const int maxPot = 920;                     // Maximum potentiometer reading
+const float maxACC_CMD = 2.5f;              // max m/s² considered (scaled from ACC_CMD)
+const float minACC_CMD = 0.0f;              // min m/s² considered
+const int user_input_threshold = 150;       // Threshold for user pedal override
 
-//________________define_pins
-int cancel_pin = 3; //pulled to GND when pedal pressed
-int potPin = A3; // connect the potentiometer of your cars throllte
+//__________ PIN ASSIGNMENTS
+const int cancel_pin = 3;                   // Cancel signal (pedal pressed by user)
+const int potPin = A3;                      // Throttle potentiometer
+const int M_DIR = 8;                        // Motor direction
+const int M_PWM = 9;                        // Motor power
+const int S_DIR = 7;                        // Solenoid direction (always LOW)
+const int S_PWM = 6;                        // Solenoid power
 
-int M_DIR = 8; // LOW is Left / HIGH is Right
-int M_PWM = 9; // 255 is run / LOW is stopp
-int S_DIR = 7; // LOW is Left / HIGH is Right
-int S_PWM = 6; // 255 is run / LOW is stopp
-
-//________________values
+//__________ STATE VARIABLES
 int targetPosition = 0;
 int potiPosition = 0;
 float ACC_CMD_PERCENT = 0;
 float ACC_CMD = 0;
-float ACC_CMD1 = 0;
-boolean cancel = false;
-boolean GAS_RELEASED = false;
+bool cancel = false;
+bool GAS_RELEASED = false;
 
 void setup() {
-//________________begin Monitor - only use it for debugging
-//Serial.begin(115200);
+  // Init CAN
+  CAN.begin(500E3);
+  CAN.filter(0x343); // ID for ACC_CONTROL (ACCEL_CMD)
 
-//________________begin CAN
-CAN.begin(500E3);
-CAN.filter(0x200);
-
-//________________set up pin modes
-pinMode(cancel_pin, INPUT_PULLUP);
-pinMode(potPin, INPUT);    
-pinMode(M_DIR, OUTPUT);
-pinMode(M_PWM, OUTPUT);
-pinMode(S_DIR, OUTPUT);
-pinMode(S_PWM, OUTPUT);
-digitalWrite(S_DIR, LOW);
-
+  // Init pins
+  pinMode(cancel_pin, INPUT_PULLUP);
+  pinMode(potPin, INPUT);    
+  pinMode(M_DIR, OUTPUT);
+  pinMode(M_PWM, OUTPUT);
+  pinMode(S_DIR, OUTPUT);
+  pinMode(S_PWM, OUTPUT);
+  digitalWrite(S_DIR, LOW);
 }
 
 void loop() {
-//________________read cancel pin
-cancel = (digitalRead(cancel_pin));
+  // Read cancel pin
+  cancel = digitalRead(cancel_pin);
 
-//________________read poti Position
-int potiPosition = (analogRead(potPin));
+  // Read potentiometer position
+  potiPosition = analogRead(potPin);
 
-//________________read ACC_CMD from CANbus
- CAN.parsePacket();
+  // Read ACC_CMD from CAN (0x343)
+  if (CAN.parsePacket() && CAN.packetId() == 0x343) {
+    uint8_t dat[8];
+    for (int i = 0; i < 8; i++) dat[i] = CAN.read();
 
- if (CAN.packetId() == 0x200)
-      {
-      uint8_t dat[8];
-      for (int ii = 0; ii <= 7; ii++) {
-        dat[ii]  = (char) CAN.read();
-        }
-        ACC_CMD = (dat[0] << 8 | dat[1] << 0); 
-       } 
-
-//________________calculating ACC_CMD into ACC_CMD_PERCENT
-if (ACC_CMD >= minACC_CMD) {
-    ACC_CMD1 = ACC_CMD;
-    }
-else {
-    ACC_CMD1 = minACC_CMD;
-    }
-
-ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
-
-//________________calculating ACC_CMD_PERCENT into targetPosition 
-float targetPosition = (((ACC_CMD_PERCENT / 100) * (maxPot - minPot)) + minPot);
-
-//________________do nothing if cancel = flase or if  ACC_CMD is 0
-if (!cancel || ACC_CMD_PERCENT == 0) {
-  analogWrite(S_PWM, 0);  //open solenoid
-  analogWrite(M_PWM, 0);  //stop Motor
+    // Signal: ACCEL_CMD : 7|16@0- (0.001,0) [-20|20]
+    // Extract Motorola 16-bit signed (big endian)
+    int16_t raw = (dat[0] << 8) | dat[1];
+    ACC_CMD = raw * 0.001f; // Scale to m/s²
   }
-   
 
-//________________press or release the pedal to match targetPosition
+  // Calculate percentage and target position
+  float clampedACC = constrain(ACC_CMD, minACC_CMD, maxACC_CMD);
+  ACC_CMD_PERCENT = ((clampedACC - minACC_CMD) / (maxACC_CMD - minACC_CMD)) * 100.0f;
+  targetPosition = ((ACC_CMD_PERCENT / 100.0f) * (maxPot - minPot)) + minPot;
 
-else {
-     analogWrite(S_PWM, 255);
-     if (abs(potiPosition - targetPosition) >= PERM_ERROR)
-        {
-          if ((potiPosition < targetPosition) && (potiPosition < maxPot)) //if we are lower than target and not at endpoint
-             { 
-              analogWrite(M_PWM, 255);  //run Motor
-              digitalWrite(M_DIR, LOW); //motor driection left
-             }    
-          else if ((potiPosition > targetPosition) && (potiPosition >= minPot)) //if we are higher than target and not at endpoint
-             {       
-              analogWrite(M_PWM, 255);   //run Motor
-              digitalWrite(M_DIR, HIGH); //motor driection right
-             }
-          }  
-      else {
-           analogWrite(M_PWM, 0); // if we match target position, just stay here
-           }
+  // Actuator logic
+  if (!cancel || ACC_CMD_PERCENT == 0) {
+    analogWrite(S_PWM, 0);
+    analogWrite(M_PWM, 0);
+  } else {
+    analogWrite(S_PWM, 255);
+    if (abs(potiPosition - targetPosition) >= PERM_ERROR) {
+      if (potiPosition < targetPosition && potiPosition < maxPot) {
+        digitalWrite(M_DIR, LOW);
+        analogWrite(M_PWM, 255);
+      } else if (potiPosition > targetPosition && potiPosition >= minPot) {
+        digitalWrite(M_DIR, HIGH);
+        analogWrite(M_PWM, 255);
       }
-
-//________________logic if gas is pressed by user 
-if (potiPosition >= (targetPosition + user_input_threshold))
-   {
-     GAS_RELEASED = false;
-   }
-else {
-     GAS_RELEASED = true;
-     }
-    
-//______________SENDING_CAN_MESSAGES
-
-  // 0x2c1 msg GAS_PEDAL
-  uint8_t dat_2c1[8];
-  dat_2c1[0] = (GAS_RELEASED << 3) & 0x08;
-  dat_2c1[1] = 0x0;
-  dat_2c1[2] = 0x0;
-  dat_2c1[3] = 0x0;
-  dat_2c1[4] = 0x0;
-  dat_2c1[5] = 0x0;
-  dat_2c1[6] = 0x0;
-  dat_2c1[7] = 0x0;
-  CAN.beginPacket(0x2c1);
-  for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_2c1[ii]);
+    } else {
+      analogWrite(M_PWM, 0);
+    }
   }
-  CAN.endPacket();
-     
-//________________print stuff if you want to DEBUG
-/*
-Serial.print("ACC_CMD_");
-Serial.print(ACC_CMD);
-Serial.print("_____");
-Serial.print(ACC_CMD_PERCENT);
-Serial.print("_%");
-Serial.print("_____");
-Serial.print("target_");
-Serial.print(targetPosition);
-Serial.print("_____");
-Serial.print("Position_");
-Serial.print(potiPosition);
-Serial.println("");
-*/
 
+  // Detect user override
+  GAS_RELEASED = !(potiPosition >= (targetPosition + user_input_threshold));
 }
