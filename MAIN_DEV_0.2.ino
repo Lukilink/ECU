@@ -1,4 +1,3 @@
-// MAIN ECU - DBC-konforme Version für Toyota Corolla 2017
 #include <CAN.h>
 
 // --- Pin Definitions ---
@@ -115,4 +114,75 @@ void loop() {
   uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
   dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
   CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
-} // loop
+
+  // LIGHT_STALK (0x1570)
+  uint8_t dat_1570[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (0x01 << 2), 0x00}; // Simulated Data
+  CAN.beginPacket(0x1570);
+  for (int i=0; !CAN_END());
+Hier fehlte ein Teil des Codes. Lass mich den vollständigen Code mit den gewünschten CAN-Nachrichten fertigstellen:
+
+```cpp
+  for (int i = 0; i < 8; i++) CAN.write(dat_1570[i]); 
+  CAN.endPacket();
+
+  // BLINKERS_STATE (0x1556)
+  uint8_t dat_1556[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (blinker_left << 1) | (blinker_right)};
+  CAN.beginPacket(0x1556);
+  for (int i = 0; i < 8; i++) CAN.write(dat_1556[i]); 
+  CAN.endPacket();
+
+  // BODY_CONTROL_STATE (0x1568)
+  uint8_t dat_1568[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simulated normal driving state
+  CAN.beginPacket(0x1568);
+  for (int i = 0; i < 8; i++) CAN.write(dat_1568[i]); 
+  CAN.endPacket();
+
+  // BODY_CONTROL_STATE_2 (0x1552)
+  uint8_t dat_1552[8] = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}; // Simulating brightness and units
+  CAN.beginPacket(0x1552);
+  for (int i = 0; i < 8; i++) CAN.write(dat_1552[i]); 
+  CAN.endPacket();
+
+  // ESP_CONTROL (0x951)
+  uint8_t dat_951[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Simulated standard ESP state
+  CAN.beginPacket(0x951);
+  for (int i = 0; i < 8; i++) CAN.write(dat_951[i]); 
+  CAN.endPacket();
+
+  // BRAKE_MODULE (0x548)
+  uint8_t dat_548[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Brake not pressed, no pressure
+  CAN.beginPacket(0x548);
+  for (int i = 0; i < 8; i++) CAN.write(dat_548[i]); 
+  CAN.endPacket();
+
+  // PCM_CRUISE_SM (0x921)
+  uint8_t dat_921[8] = {0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00}; // Normal cruise state
+  CAN.beginPacket(0x921);
+  for (int i = 0; i < 8; i++) CAN.write(dat_921[i]); 
+  CAN.endPacket();
+
+  // VSC1S07 (0x800)
+  uint8_t dat_800[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Standard stability control state
+  CAN.beginPacket(0x800);
+  for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); 
+  CAN.endPacket();
+
+  // ENGINE_RPM (0x452)
+  uint16_t rpm = 3000; // 3000 RPM
+  uint8_t dat_452[8] = {rpm >> 8, rpm & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  CAN.beginPacket(0x452);
+  for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); 
+  CAN.endPacket();
+
+  // GEAR_PACKET (0x956)
+  uint8_t dat_956[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; // Drive engaged
+  CAN.beginPacket(0x956);
+  for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); 
+  CAN.endPacket();
+
+  // PRE_COLLISION_2 (0x836)
+  uint8_t dat_836[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Normal state
+  CAN.beginPacket(0x836);
+  for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); 
+  CAN.endPacket();
+}
