@@ -99,7 +99,6 @@ void loop() {
   sendPCM_CRUISE();
   sendPCM_CRUISE_2();
   sendWHEEL_SPEEDS();
-  sendSTEERING_IPAS();
   sendLIGHT_STALK();
   sendBLINKERS_STATE();
   sendBODY_CONTROL_STATE();
@@ -134,12 +133,6 @@ void sendWHEEL_SPEEDS() {
     dat_170[i * 2 + 1] = ws_kph & 0xFF;
   }
   CAN.beginPacket(0x170); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
-}
-
-void sendSTEERING_IPAS() {
-  uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
-  dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
-  CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
 }
 
 void sendLIGHT_STALK() {
