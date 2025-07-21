@@ -115,17 +115,4 @@ void loop() {
   uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
   dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
   CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
-
-  if (CAN.parsePacket()) {
-    uint16_t id = CAN.packetId();
-    uint8_t data[8];
-    for (int i = 0; i < 8; i++) data[i] = CAN.read();
-
-    if (id == 0x548) {
-      BRAKE_PRESSED = (data[0] >> 5) & 0x01;
-    }
-    else if (id == 0x705) {
-      GAS_RELEASED = (data[0] >> 3) & 0x01;
-    }
-  }
 } // loop
