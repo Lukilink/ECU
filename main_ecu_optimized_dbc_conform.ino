@@ -41,39 +41,38 @@ bool door_open_rl = false;                  // Rear Left Door
 bool door_open_rr = false;                  // Rear Right Door
 bool door_open_fr = false;                  // Front Right Door
 
-// --- Body Control State 2 Variables ---
-uint8_t ui_speed = 60;                      // UI_SPEED in km/h (simulated)
-uint8_t meter_slider_brightness_pct = 80;   // METER_SLIDER_BRIGHTNESS_PCT (in %)
-bool meter_slider_low_brightness = false;   // METER_SLIDER_LOW_BRIGHTNESS
-bool meter_slider_dimmed = false;           // METER_SLIDER_DIMMED
-uint8_t units = 1;                          // UNITS (1 = km)
-
-// --- PCM_CRUISE_SM Variables ---
-uint8_t cruise_control_state = 3;           // Simulating a normal cruise control state (e.g., active)
-uint8_t distance_lines = 2;                 // Simulating 2 distance lines (normal state)
-bool temp_acc_faulted = false;              // Simulating no ACC fault
-uint8_t ui_set_speed = 100;                 // Simulated set speed (e.g., 100 km/h)
-
-// --- ENGINE_RPM Variables ---
-uint16_t engine_rpm = 3000;                 // Simulated fixed engine RPM (e.g., 3000 rpm)
-bool engine_running = true;                 // Simulated engine running state
-
-// --- GEAR_PACKET Variables ---
-bool sport_on = false;                      // SPORT_ON: Off
-uint8_t gear = 4;                           // GEAR: Simulating 4th gear
-bool sport_gear_on = false;                 // SPORT_GEAR_ON: Off
-uint8_t sport_gear = 0;                     // SPORT_GEAR: Not engaged
-bool econ_on = false;                       // ECON_ON: Off
-bool b_gear_engaged = false;                // B_GEAR_ENGAGED: Off
-bool drive_engaged = true;                  // DRIVE_ENGAGED: On
-
 // --- PRE_COLLISION_2 Variables ---
-uint16_t dss1gdrv = 0;                      // DSS1GDRV: Simulated 0 m/s^2
+uint16_t dss1gdrv = 0;                      // DSS1GDRV: Simulated 0 m/s²
 bool pcsalm = false;                        // PCSALM: Alarm off
 bool ibtrgr = false;                        // IBTRGR: Not triggered
 uint8_t pbatrgr = 0;                        // PBATRGR: Not triggered
 bool prefill = false;                       // PREFILL: Off
 bool avstrgr = false;                       // AVSTRGR: Not triggered
+
+// --- VSC1S07 Variables ---
+bool fbkrly = false;                        // FBKRLY: Off
+bool fvscm = false;                         // FVSCM: Off
+bool fvscsft = false;                       // FVSCSFT: Off
+bool fabs = false;                          // FABS: Off
+bool tsvsc = false;                         // TSVSC: Off
+bool fvscl = false;                         // FVSCL: Off
+bool rqcstbkb = false;                      // RQCSTBKB: Off
+bool psbstby = false;                       // PSBSTBY: Off
+bool p2brxmk = false;                       // P2BRXMK: Off
+bool mcc = false;                           // MCC: Off
+bool rqbkb = false;                         // RQBKB: Off
+bool brstop = false;                        // BRSTOP: Off
+bool brkon = false;                         // BRKON: Off
+int8_t aslp = 0;                            // ASLP: 0 degrees
+uint8_t brtypacc = 0;                       // BRTYPACC: Not active
+bool brkabt3 = false;                       // BRKABT3: Off
+bool brkabt2 = false;                       // BRKABT2: Off
+bool brkabt1 = false;                       // BRKABT1: Off
+float gvc = 0.0;                            // GVC: 0 m/s²
+bool xgvcinv = false;                       // XGVCINV: Off
+bool s07cnt = false;                        // S07CNT: Off
+uint8_t pcsbrsta = 0;                       // PCSBRSTA: Not active
+uint8_t vsc07sum = 0;                       // VSC07SUM: Checksum placeholder
 
 const int numReadings = 160;
 float readings[numReadings] = {0};
@@ -148,20 +147,16 @@ void loop() {
   dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);
   CAN.beginPacket(0x1D2); for (int i = 0; i < 8; i++) CAN.write(dat_1d2[i]); CAN.endPacket();
 
-  // PCM_CRUISE_2 (0x1D3)
-  uint8_t dat_1d3[8] = { 0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0 };
-  dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
-  CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
-
-  // PRE_COLLISION_2 (0x836)
-  uint8_t dat_836[8] = {0};
-  uint16_t scaled_dss1gdrv = (uint16_t)(dss1gdrv / 0.1); // Scale DSS1GDRV
-  dat_836[0] = (scaled_dss1gdrv >> 2) & 0xFF;            // High 10 bits of DSS1GDRV
-  dat_836[1] = (scaled_dss1gdrv & 0x03) << 6;            // Low 2 bits of DSS1GDRV
-  dat_836[2] = (pcsalm << 1) | (ibtrgr << 3);            // Encode PCSALM and IBTRGR
-  dat_836[3] = (pbatrgr << 6) | (prefill << 5) | (avstrgr << 4); // Encode PBATRGR, PREFILL, AVSTRGR
-  dat_836[7] = dbc_checksum(dat_836, 7, 0x836);          // Calculate checksum
-  CAN.beginPacket(0x836); for (int i = 0; i < 8; i++) CAN.write(dat_836[i]); CAN.endPacket();
+  // VSC1S07 (0x800)
+  uint8_t dat_800[8] = {0};
+  dat_800[0] = (fvscl) | (tsvsc << 1) | (fabs << 2) | (fvscsft << 3) | (fvscm << 4) | (fbkrly << 6);
+  dat_800[1] = (rqcstbkb << 7) | (psbstby << 6) | (p2brxmk << 5) | (mcc << 3) | (rqbkb << 2) | (brstop << 1) | (brkon);
+  dat_800[2] = aslp; // Encode ASLP (degrees)
+  dat_800[3] = (brtypacc << 6) | (brkabt3 << 5) | (brkabt2 << 4) | (brkabt1 << 3);
+  dat_800[4] = (uint8_t)(gvc / 0.04); // Encode scaled GVC
+  dat_800[5] = (xgvcinv << 7) | (s07cnt << 6) | (pcsbrsta << 4);
+  dat_800[7] = dbc_checksum(dat_800, 7, 0x800); // Calculate checksum
+  CAN.beginPacket(0x800); for (int i = 0; i < 8; i++) CAN.write(dat_800[i]); CAN.endPacket();
 
   // Other CAN messages (unchanged)
   // ...
