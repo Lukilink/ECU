@@ -12,8 +12,6 @@ const byte interruptPin = 3;
 bool buttonStates[4] = {HIGH, HIGH, HIGH, HIGH};
 bool lastButtonStates[4] = {HIGH, HIGH, HIGH, HIGH};
 bool clutchPressed = false;
-bool lastGAS_RELEASED = false;
-bool lastBRAKE_PRESSED = false;
 
 // --- CAN and Logic Values ---
 bool OP_ON = false;
@@ -40,9 +38,9 @@ void rpm() {
   half_revolutions++;
 }
 
-int can_cksum(uint8_t *dat, uint8_t len, uint16_t addr) {
+uint8_t dbc_checksum(uint8_t *data, uint8_t len, uint16_t addr) {
   uint8_t checksum = ((addr >> 8) & 0xFF) + (addr & 0xFF) + len + 1;
-  for (int i = 0; i < len; i++) checksum += dat[i];
+  for (int i = 0; i < len; i++) checksum += data[i];
   return checksum;
 }
 
@@ -93,17 +91,15 @@ void loop() {
   if (set_speed > 200) set_speed = 0;
 
   for (int i = 0; i < 4; i++) lastButtonStates[i] = buttonStates[i];
-  lastBRAKE_PRESSED = BRAKE_PRESSED;
-  lastGAS_RELEASED = GAS_RELEASED;
 
   // PCM_CRUISE (0x1D2)
   uint8_t dat_1d2[8] = { (OP_ON << 5) | (GAS_RELEASED << 4), 0, 0, 0, 0, 0, (OP_ON << 7), 0 };
-  dat_1d2[7] = can_cksum(dat_1d2, 7, 0x1D2);
+  dat_1d2[7] = dbc_checksum(dat_1d2, 7, 0x1D2);
   CAN.beginPacket(0x1D2); for (int i = 0; i < 8; i++) CAN.write(dat_1d2[i]); CAN.endPacket();
 
   // PCM_CRUISE_2 (0x1D3)
   uint8_t dat_1d3[8] = { 0, (MAIN_ON << 7) | 0x28, set_speed, 0, 0, 0, 0, 0 };
-  dat_1d3[7] = can_cksum(dat_1d3, 7, 0x1D3);
+  dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
   CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
 
   // WHEEL_SPEEDS (0x170)
@@ -115,9 +111,9 @@ void loop() {
   }
   CAN.beginPacket(0x170); for (int i = 0; i < 8; i++) CAN.write(dat_170[i]); CAN.endPacket();
 
-  // STEERING_LEVERS (0x614)
+  // STEERING_IPAS (0x614)
   uint8_t dat_614[8] = {0x29, 0, 0x01, (blinker_left << 5) | (blinker_right << 4), 0, 0, 0x76, 0};
-  dat_614[7] = can_cksum(dat_614, 7, 0x614);
+  dat_614[7] = dbc_checksum(dat_614, 7, 0x614);
   CAN.beginPacket(0x614); for (int i = 0; i < 8; i++) CAN.write(dat_614[i]); CAN.endPacket();
 
   if (CAN.parsePacket()) {
