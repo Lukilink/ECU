@@ -58,6 +58,15 @@ uint8_t ui_set_speed = 100;                 // Simulated set speed (e.g., 100 km
 uint16_t engine_rpm = 3000;                 // Simulated fixed engine RPM (e.g., 3000 rpm)
 bool engine_running = true;                 // Simulated engine running state
 
+// --- GEAR_PACKET Variables ---
+bool sport_on = false;                      // SPORT_ON: Off
+uint8_t gear = 4;                           // GEAR: Simulating 4th gear
+bool sport_gear_on = false;                 // SPORT_GEAR_ON: Off
+uint8_t sport_gear = 0;                     // SPORT_GEAR: Not engaged
+bool econ_on = false;                       // ECON_ON: Off
+bool b_gear_engaged = false;                // B_GEAR_ENGAGED: Off
+bool drive_engaged = true;                  // DRIVE_ENGAGED: On
+
 const int numReadings = 160;
 float readings[numReadings] = {0};
 int readIndex = 0;
@@ -136,14 +145,14 @@ void loop() {
   dat_1d3[7] = dbc_checksum(dat_1d3, 7, 0x1D3);
   CAN.beginPacket(0x1D3); for (int i = 0; i < 8; i++) CAN.write(dat_1d3[i]); CAN.endPacket();
 
-  // ENGINE_RPM (0x452)
-  uint8_t dat_452[8] = {0};
-  uint16_t scaled_rpm = engine_rpm / 0.78125; // Scale RPM value according to signal factor
-  dat_452[0] = (scaled_rpm >> 8) & 0xFF;     // High 8 bits of RPM
-  dat_452[1] = scaled_rpm & 0xFF;            // Low 8 bits of RPM
-  dat_452[3] = (engine_running << 3);        // Encode ENGINE_RUNNING
-  dat_452[7] = dbc_checksum(dat_452, 7, 0x452); // Calculate checksum
-  CAN.beginPacket(0x452); for (int i = 0; i < 8; i++) CAN.write(dat_452[i]); CAN.endPacket();
+  // GEAR_PACKET (0x956)
+  uint8_t dat_956[8] = {0};
+  dat_956[0] = (sport_on << 2);             // Encode SPORT_ON
+  dat_956[1] = (gear & 0x3F) << 2;          // Encode GEAR (6 bits)
+  dat_956[4] = (sport_gear_on << 1) | (sport_gear << 2) | (econ_on << 4) | (b_gear_engaged << 5); // SPORT_GEAR_ON, SPORT_GEAR, ECON_ON, B_GEAR_ENGAGED
+  dat_956[5] = (drive_engaged << 7);        // Encode DRIVE_ENGAGED
+  dat_956[7] = dbc_checksum(dat_956, 7, 0x956); // Calculate checksum
+  CAN.beginPacket(0x956); for (int i = 0; i < 8; i++) CAN.write(dat_956[i]); CAN.endPacket();
 
   // Other CAN messages (unchanged)
   // ...
