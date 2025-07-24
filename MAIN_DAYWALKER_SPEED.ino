@@ -155,7 +155,7 @@ void loopUpdateVssSensor() {
         SREG = SaveSREG;
 
         float tmpSpeedKMH = tmpVssSensorRevolutions * (VSS_DISTANCE_PER_REVOLUTION / (vssDuration * 0.000001)) * 3.6;
-        if (tmpSpeedKMH<=VSS_MAX_SPEED) // we cap the speed we measure to max. 150km/h (max. OP speed) because sometimes at high frequencies the hall sensor might bounce and produce incorrect, way too high readings
+        if (tmpSpeedKMH<=VSS_MAX_SPEED) // we cap the speed we measure to max. 150km/h (max. OP speed) because sometimes at high frequencies the hall sensor might bounce and produce incorrect, way too[...]
           vssSpeedKMH = max(vssSpeedKMH, tmpSpeedKMH);
         #if VSS_SENSOR_SMOOTHING==3
           vssSpeedKMH=max(min(vssSpeedKMH, vssAvgSpeedKMH+10), vssAvgSpeedKMH-10);
@@ -369,37 +369,9 @@ lastGAS_RELEASED = GAS_RELEASED;
   }
   CAN.endPacket();
 */
-  //0x620 msg STEATS_DOORS
-  uint8_t dat_620[8];
-  dat_620[0] = 0x10;
-  dat_620[1] = 0x0;
-  dat_620[2] = 0x0;
-  dat_620[3] = 0x1d;
-  dat_620[4] = 0xb0;
-  dat_620[5] = 0x40;
-  dat_620[6] = 0x0;
-  dat_620[7] = 0x0;
-  CAN.beginPacket(0x620);
-  for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_620[ii]);
-  }
-  CAN.endPacket();
-
+  // Die folgenden Nachrichten wurden entfernt:
+  // 0x620 msg STEATS_DOORS
   // 0x3bc msg GEAR_PACKET
-  uint8_t dat_3bc[8];
-  dat_3bc[0] = 0x0;
-  dat_3bc[1] = 0x0;
-  dat_3bc[2] = 0x0;
-  dat_3bc[3] = 0x0;
-  dat_3bc[4] = 0x0;
-  dat_3bc[5] = 0x80;
-  dat_3bc[6] = 0x0;
-  dat_3bc[7] = 0x0;
-  CAN.beginPacket(0x3bc);
-  for (int ii = 0; ii < 8; ii++) {
-    CAN.write(dat_3bc[ii]);
-  }
-  CAN.endPacket();
 
   //0x614 msg steering_levers
   uint8_t dat_614[8];
