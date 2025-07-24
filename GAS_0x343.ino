@@ -7,8 +7,8 @@
 int PERM_ERROR = 8; //will allow a diffrence between targetPressure and currentPressure
 int minPot = 86; //measured at actuators lowest position
 int maxPot = 920; //measured at actuators highest position
-float maxACC_CMD = 1500; //the max Value which comes from OP on CAN ID 0x200
-float minACC_CMD = 475; //the min Value which comes from OP on CAN ID 0x200
+float maxACC_CMD = 20; //the max Value which comes from OP on CAN ID 0x343
+float minACC_CMD = -20; //the min Value which comes from OP on CAN ID 0x343
 int user_input_threshold = 150; // threshold to trigger user gas_press (potiPossition >= tagetposition + user_input_threshold)
 
 //________________define_pins
@@ -35,7 +35,7 @@ void setup() {
 
 //________________begin CAN
 CAN.begin(500E3);
-CAN.filter(0x200);
+CAN.filter(0x343);
 
 //________________set up pin modes
 pinMode(cancel_pin, INPUT_PULLUP);
@@ -56,16 +56,18 @@ cancel = (digitalRead(cancel_pin));
 int potiPosition = (analogRead(potPin));
 
 //________________read ACC_CMD from CANbus
- CAN.parsePacket();
+    CAN.parsePacket();
 
- if (CAN.packetId() == 0x200)
-      {
-      uint8_t dat[8];
-      for (int ii = 0; ii <= 7; ii++) {
-        dat[ii]  = (char) CAN.read();
+    if (CAN.packetId() == 0x343) // Neue ID!
+    {
+        uint8_t dat[8];
+        for (int ii = 0; ii < 8; ii++) {
+            dat[ii]  = (uint8_t) CAN.read();
         }
-        ACC_CMD = (dat[0] << 8 | dat[1] << 0); 
-       } 
+        int16_t accel_cmd_raw = dat[0] | (dat[1] << 8);
+        float accel_cmd = accel_cmd_raw * 0.001; // Wert in m/s²
+        ACC_CMD = accel_cmd;
+    }
 
 //________________calculating ACC_CMD into ACC_CMD_PERCENT
 if (ACC_CMD >= minACC_CMD) {
