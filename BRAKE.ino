@@ -6,13 +6,13 @@
 #include <CAN.h>
 
 //________________this values needs to be define for each car
-int PERM_ERROR = 2; // will allow a diffrence between targetPressure and currentPressure
-int maxPressure = 190; // the max pressure your actuator is able to aply
-int minPressure = 100; //the pressure in stand still
-float maxACC_CMD = 20.0; //the max Value which comes from OP
-float minACC_CMD = -20.0; //the min Value which comes from OP
+int PERM_ERROR = 2; // will allow a difference between targetPressure and currentPressure
+int maxPressure = 190; // the max pressure your actuator is able to apply
+int minPressure = 100; // the pressure in stand still
+float maxACC_CMD = 20.0;  // the max Value which comes from OP (DBC: +20 m/s^2)
+float minACC_CMD = -20.0; // the min Value which comes from OP (DBC: -20 m/s^2)
 int brake_pressed_threshold = 5; // threshold when user input is detected
-int brake_light_threshold = 5; // threshold when brakelights schould turn on
+int brake_light_threshold = 5;   // threshold when brakelights should turn on
 
 //________________define_pins
 int pressurePin = A2;
@@ -27,7 +27,6 @@ float targetPressure;
 float currentPressure;
 float ACC_CMD_PERCENT;
 float ACC_CMD;
-float ACC_CMD1;
 boolean BRAKE_PRESSED = true;
 boolean releasing_by_OP = false;
 boolean open_solenoid = true;
@@ -70,18 +69,17 @@ void loop() {
       ACC_CMD = raw_accel_cmd * -0.001; // DBC: Faktor 0.001, Vorzeichenumkehr
   }
 
-  //________________calculating ACC_CMD into ACC_CMD_PERCENT
-  if (ACC_CMD >= minACC_CMD) {
-      ACC_CMD1 = ACC_CMD;
+  //________________calculating ACC_CMD into ACC_CMD_PERCENT (only negative ACC_CMD relevant for braking)
+  if (ACC_CMD <= 0) {
+      // Negative ACC_CMD (Bremsanforderung): -20 → 100%, 0 → 0%
+      ACC_CMD_PERCENT = (ACC_CMD / minACC_CMD) * 100.0;
+  } else {
+      // Positive ACC_CMD (Beschleunigung): keine Bremsanforderung
+      ACC_CMD_PERCENT = 0;
   }
-  else {
-      ACC_CMD1 = minACC_CMD;
-  }
-        
-  ACC_CMD_PERCENT = ((100/(maxACC_CMD - minACC_CMD)) * (ACC_CMD1 - minACC_CMD));
 
   //________________calculating targetPressure
-  targetPressure = (((ACC_CMD_PERCENT / 100) * (maxPressure - minPressure)) + minPressure); // conversion from ACC_CMD_PERCENT % into targetpressure
+  targetPressure = (((ACC_CMD_PERCENT / 100.0) * (maxPressure - minPressure)) + minPressure); // conversion from ACC_CMD_PERCENT % into targetpressure
 
   //________________press or release the pedal to match targetPressure
   if (abs(currentPressure - targetPressure) >= PERM_ERROR)
@@ -90,19 +88,19 @@ void loop() {
       if ((currentPressure < targetPressure) && (ACC_CMD_PERCENT > 0))
       { 
           analogWrite(M_PWM, 255);  //run Motor
-          digitalWrite(M_DIR, HIGH); //motor driection left | press the pedal
+          digitalWrite(M_DIR, HIGH); //motor direction left | press the pedal
           releasing_by_OP = false;
       }    
       else if (currentPressure > targetPressure)
       {       
           analogWrite(M_PWM, 255);   //run Motor
-          digitalWrite(M_DIR, LOW); //motor driection right | release the pedal
+          digitalWrite(M_DIR, LOW); //motor direction right | release the pedal
           releasing_by_OP = true;
       }
       else if (ACC_CMD_PERCENT == 0)
       {       
           analogWrite(M_PWM, 255);   //run Motor
-          digitalWrite(M_DIR, LOW); //motor driection right | release the pedal
+          digitalWrite(M_DIR, LOW); //motor direction right | release the pedal
           releasing_by_OP = false;
       }
   }  
@@ -156,8 +154,6 @@ void loop() {
       dat_3b7[2] |= (1 << 2);
   }
 
-  // [weitere Signale hier nach Bedarf, z.B. TC_DISABLED, VSC_DISABLED, usw.]
-
   CAN.beginPacket(0x3b7);
   for (int ii = 0; ii < 8; ii++) {
       CAN.write(dat_3b7[ii]);
@@ -179,5 +175,4 @@ void loop() {
   Serial.println(currentPressure);
   Serial.println("");
   */
-
 }
