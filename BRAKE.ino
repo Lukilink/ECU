@@ -11,6 +11,7 @@ int maxPressure = 190; // the max pressure your actuator is able to apply
 int minPressure = 100; // the pressure in stand still
 float maxACC_CMD = 20.0;  // the max Value which comes from OP (DBC: +20 m/s^2)
 float minACC_CMD = -20.0; // the min Value which comes from OP (DBC: -20 m/s^2)
+float brake_force_factor = 1.0; // Skalierung der Bremskraft: 1.0 = 100%, <1 = weniger, >1 = mehr
 int brake_pressed_threshold = 5; // threshold when user input is detected
 int brake_light_threshold = 5;   // threshold when brakelights should turn on
 
@@ -71,10 +72,10 @@ void loop() {
 
   //________________calculating ACC_CMD into ACC_CMD_PERCENT (only negative ACC_CMD relevant for braking)
   if (ACC_CMD <= 0) {
-      // Negative ACC_CMD (Bremsanforderung): -20 → 100%, 0 → 0%
-      ACC_CMD_PERCENT = (ACC_CMD / minACC_CMD) * 100.0;
+      ACC_CMD_PERCENT = (ACC_CMD / minACC_CMD) * 100.0 * brake_force_factor;
+      if (ACC_CMD_PERCENT > 100.0) ACC_CMD_PERCENT = 100.0;
+      if (ACC_CMD_PERCENT < 0.0) ACC_CMD_PERCENT = 0.0;
   } else {
-      // Positive ACC_CMD (Beschleunigung): keine Bremsanforderung
       ACC_CMD_PERCENT = 0;
   }
 
