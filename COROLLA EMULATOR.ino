@@ -38,9 +38,10 @@ void loop() {
   {
     uint8_t data[8] = {0};
     // GAS_RELEASED (bit 4)
-    data[0] |= (1 << 4); // 1 = released
     // CRUISE_ACTIVE (bit 5)
-    data[0] |= (1 << 5); // 1 = active
+    // Beide richten sich nach mainOn:
+    data[0] |= ((mainOn ? 0 : 1) << 4); // GAS_RELEASED: false (0) wenn mainOn==true, true (1) wenn mainOn==false
+    data[0] |= ((mainOn ? 1 : 0) << 5); // CRUISE_ACTIVE: true (1) wenn mainOn==true, false (0) wenn mainOn==false
     // ACC_BRAKING (bit 4 of byte 1)
     data[1] |= (0 << 4); // 0 = no braking
     // ACCEL_NET (byte 2/3, signed 16bit, -1.0...1.0 m/s²)
@@ -123,20 +124,35 @@ void loop() {
     CAN.endPacket();
   }
 
-  // GEAR_PACKET (0x3bc)
-  {
-    uint8_t data[8] = {0};
-    data[0] |= (0 << 2);
-    data[1] |= (4 & 0x3F); // 4 = Drive
-    data[4] |= (0 << 1);
-    data[4] |= (0 << 4);
-    data[5] |= (0 << 0);
-    data[5] |= (0 << 1);
-    data[5] |= (1 << 7);
-    CAN.beginPacket(0x3BC);
-    for (int i = 0; i < 8; i++) CAN.write(data[i]);
-    CAN.endPacket();
-  }
+ // 0x3bc msg GEAR_PACKET
+uint8_t dat_3bc[8] = {0}; // Initialisiere alle Bytes mit 0
+
+// SPORT_ON (Bit 2)
+dat_3bc[0] |= (1 << 2);
+
+// GEAR (Bits 13-18, also Byte 1, Bit 5 bis Byte 2, Bit 0, 6 Bit)
+dat_3bc[1] |= ((4 & 0x3F) << 5);       // lower 3 Bit in byte 1, upper 3 Bit in byte 2
+dat_3bc[2] |= ((4 & 0x3F) >> 3);       // restliche bits in byte 2
+
+// SPORT_GEAR_ON (Bit 33 = Byte 4, Bit 1)
+dat_3bc[4] |= (1 << 1);
+
+// SPORT_GEAR (Bits 38–40 = Byte 4, Bit 6-7 + Byte 5, Bit 0)
+dat_3bc[4] |= ((1 & 0x03) << 6);       // Bit 6-7 in Byte 4
+dat_3bc[5] |= ((1 & 0x04) >> 2);       // Bit 0 in Byte 5
+
+// ECON_ON (Bit 40 = Byte 5, Bit 0), Wert bleibt 0 -> nichts tun
+
+// B_GEAR_ENGAGED (Bit 41 = Byte 5, Bit 1), Wert bleibt 0 -> nichts tun
+
+// DRIVE_ENGAGED (Bit 47 = Byte 5, Bit 7)
+dat_3bc[5] |= (1 << 7);
+
+CAN.beginPacket(0x3bc);
+for (int ii = 0; ii < 8; ii++) {
+    CAN.write(dat_3bc[ii]);
+}
+CAN.endPacket();
 
   // ESP_CONTROL (0x3b7)
   {
