@@ -44,6 +44,16 @@ BO_ 1568 BODY_CONTROL_STATE: 8 XXX
  SG_ DOOR_OPEN_RR : 43|1@0+ (1,0) [0|1] "" XXX
  SG_ DOOR_OPEN_FR : 44|1@0+ (1,0) [0|1] "" XXX
 
+0x3bc
+BO_ 956 GEAR_PACKET: 8 XXX
+ SG_ SPORT_ON : 2|1@0+ (1,0) [0|1] "" XXX
+ SG_ GEAR : 13|6@0+ (1,0) [0|63] "" XXX
+ SG_ SPORT_GEAR_ON : 33|1@0+ (1,0) [0|1] "" XXX
+ SG_ SPORT_GEAR : 38|3@0+ (1,0) [0|7] "" XXX
+ SG_ ECON_ON : 40|1@0+ (1,0) [0|1] "" XXX
+ SG_ B_GEAR_ENGAGED : 41|1@0+ (1,0) [0|1] "" XXX
+ SG_ DRIVE_ENGAGED : 47|1@0+ (1,0) [0|1] "" XXX
+
 *BRAKE ECU SENDS :*
 
 0x3b7
@@ -108,6 +118,7 @@ BO_ 835 ACC_CONTROL: 8 DSU
 
 *Steering Angle Sensor SENDS*
 
+0x25
 BO_ 37 STEER_ANGLE_SENSOR: 8 XXX
  SG_ STEER_ANGLE : 3|12@0- (1.5,0) [-500|500] "deg" XXX
  SG_ STEER_FRACTION : 39|4@0- (0.1,0) [-0.7|0.7] "deg" XXX
