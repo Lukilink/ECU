@@ -1,0 +1,239 @@
+Nachricht / Kommentar	HEX	DEC
+
+PCM_CRUISE	0x1D2	466
+PCM_CRUISE_2	0x1D3	467
+WHEEL_SPEEDS	0xAA	170
+BLINKERS_STATE	0x614	1556
+BODY_CONTROL_STATE	0x620	1568
+GEAR_PACKET	0x3BC	956
+ESP_CONTROL	0x3B7	951
+STEER_ANGLE_SENSOR	0x25	37
+STEER_TORQUE_SENSOR	0x260	608
+EPS_STATUS	0x262	610
+LIGHT_STALK	0x622	1570
+PRE_COLLISION	0x283	643
+BRAKE_MODULE	0x224	548
+BODY_CONTROL_STATE_2	0x610	1552
+PCM_CRUISE_SM	0x399	921
+ENGINE_RPM	0x1C4	452
+VSC1S07	0x320	800
+LKAS_HUD
+
+
+
+0x1d2
+BO_ 466 PCM_CRUISE: 8 XXX
+ SG_ GAS_RELEASED : 4|1@0+ (1,0) [0|1] "" XXX
+ SG_ CRUISE_ACTIVE : 5|1@0+ (1,0) [0|1] "" XXX
+ SG_ ACC_BRAKING : 12|1@0+ (1,0) [0|1] "" XXX
+ SG_ ACCEL_NET : 23|16@0- (0.0009765625,0) [-20|20] "m/s^2" XXX
+ SG_ NEUTRAL_FORCE : 39|16@0- (2,0) [-65536|65534] "N" XXX
+ SG_ CRUISE_STATE : 55|4@0+ (1,0) [0|15] "" XXX
+ SG_ CANCEL_REQ : 49|1@1+ (1,0) [0|1] "" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 466 NEUTRAL_FORCE "force in newtons the engine/electric motors are applying without any acceleration commands or user input";
+CM_ SG_ 466 ACC_BRAKING "whether brakes are being actuated from ACC command";
+CM_ SG_ 466 ACCEL_NET "net negative acceleration (braking) applied by the system if on flat ground";
+CM_ SG_ 466 CRUISE_STATE "Active state is 8, if standstill is requested will switch to state 11(3 sec timer), after timer is elapsed will switch into state 7(standstill). If plus button was pressed - status 9, minus button pressed - status 10";
+VAL_ 466 CRUISE_STATE 11 "timer_3sec" 10 "adaptive click down" 9 "adaptive click up" 8 "adaptive engaged" 7 "standstill" 6 "non-adaptive click up" 5 "non-adaptive click down" 4 "non-adaptive hold down" 3 "non-adaptive hold up" 2 "non-adaptive being engaged" 1 "non-adaptive engaged" 0 "off";
+
+0x1d3
+BO_ 467 PCM_CRUISE_2: 8 XXX
+ SG_ BRAKE_PRESSED : 3|1@0+ (1,0) [0|1] "" XXX
+ SG_ PCM_FOLLOW_DISTANCE : 12|2@0+ (1,0) [0|3] "" XXX
+ SG_ LOW_SPEED_LOCKOUT : 14|2@0+ (1,0) [0|3] "" XXX
+ SG_ MAIN_ON : 15|1@0+ (1,0) [0|1] "" XXX
+ SG_ SET_SPEED : 23|8@0+ (1,0) [0|255] "km/h" XXX
+ SG_ ACC_FAULTED : 47|1@0+ (1,0) [0|1] "" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 467 ACC_FAULTED "1 when ACC is faulted and the PCM disallows engagement";
+CM_ SG_ 467 SET_SPEED "43 km/h are shown as 28 mph, so conversion isn't perfect";
+CM_ SG_ 467 LOW_SPEED_LOCKOUT "in low speed lockout, system would always disengage below 28mph";
+VAL_ 467 LOW_SPEED_LOCKOUT 2 "low speed locked" 1 "ok";
+VAL_ 467 PCM_FOLLOW_DISTANCE 1 "far" 2 "medium" 3 "close";
+
+0xaa
+BO_ 170 WHEEL_SPEEDS: 8 XXX
+ SG_ WHEEL_SPEED_FR : 7|16@0+ (0.01,-67.67) [0|250] "km/h" XXX
+ SG_ WHEEL_SPEED_FL : 23|16@0+ (0.01,-67.67) [0|250] "km/h" XXX
+ SG_ WHEEL_SPEED_RR : 39|16@0+ (0.01,-67.67) [0|250] "km/h" XXX
+ SG_ WHEEL_SPEED_RL : 55|16@0+ (0.01,-67.67) [0|250] "km/h" XXX
+
+0x614
+BO_ 1556 BLINKERS_STATE: 8 XXX
+ SG_ BLINKER_BUTTON_PRESSED : 15|1@0+ (1,0) [0|1] "" XXX
+ SG_ HAZARD_LIGHT : 27|1@0+ (1,0) [0|1] "" XXX
+ SG_ TURN_SIGNALS : 29|2@0+ (1,0) [0|3] "" XXX
+
+VAL_ 1556 TURN_SIGNALS 3 "none" 2 "right" 1 "left";
+VAL_ 1556 BLINKER_BUTTON_PRESSED 1 "button pressed" 0 "not pressed";
+
+
+0x620
+BO_ 1568 BODY_CONTROL_STATE: 8 XXX
+ SG_ METER_DIMMED : 38|1@0+ (1,0) [0|1] "" XXX
+ SG_ PARKING_BRAKE : 60|1@0+ (1,0) [0|1] "" XXX
+ SG_ SEATBELT_DRIVER_UNLATCHED : 62|1@0+ (1,0) [0|1] "" XXX
+ SG_ DOOR_OPEN_FL : 45|1@0+ (1,0) [0|1] "" XXX
+ SG_ DOOR_OPEN_RL : 42|1@0+ (1,0) [0|1] "" XXX
+ SG_ DOOR_OPEN_RR : 43|1@0+ (1,0) [0|1] "" XXX
+ SG_ DOOR_OPEN_FR : 44|1@0+ (1,0) [0|1] "" XXX
+
+0x3bc
+BO_ 956 GEAR_PACKET: 8 XXX
+ SG_ SPORT_ON : 2|1@0+ (1,0) [0|1] "" XXX
+ SG_ GEAR : 13|6@0+ (1,0) [0|63] "" XXX
+ SG_ SPORT_GEAR_ON : 33|1@0+ (1,0) [0|1] "" XXX
+ SG_ SPORT_GEAR : 38|3@0+ (1,0) [0|7] "" XXX
+ SG_ ECON_ON : 40|1@0+ (1,0) [0|1] "" XXX
+ SG_ B_GEAR_ENGAGED : 41|1@0+ (1,0) [0|1] "" XXX
+ SG_ DRIVE_ENGAGED : 47|1@0+ (1,0) [0|1] "" XXX
+
+CM_ SG_ 956 GEAR "on 6MT, only R shows.";
+VAL_ 956 SPORT_ON 0 "off" 1 "on";
+VAL_ 956 GEAR 0 "D" 1 "S" 8 "N" 16 "R" 32 "P";
+VAL_ 956 SPORT_GEAR_ON 0 "off" 1 "on";
+VAL_ 956 SPORT_GEAR 1 "S1" 2 "S2" 3 "S3" 4 "S4" 5 "S5" 6 "S6";
+VAL_ 956 ECON_ON 0 "off" 1 "on";
+VAL_ 956 B_GEAR_ENGAGED 0 "off" 1 "on";
+VAL_ 956 DRIVE_ENGAGED 0 "off" 1 "on";
+
+0x3b7
+BO_ 951 ESP_CONTROL: 8 ESP
+ SG_ TC_DISABLED : 13|1@0+ (1,0) [0|1] "" XXX
+ SG_ VSC_DISABLED : 12|2@0+ (1,0) [0|1] "" XXX
+ SG_ BRAKE_LIGHTS_ACC : 18|1@0+ (1,0) [0|1] "" XXX
+ SG_ BRAKE_HOLD_ENABLED : 33|1@1+ (1,0) [0|1] "" XXX
+ SG_ BRAKE_HOLD_ACTIVE : 36|1@0+ (1,0) [0|1] "" XXX
+
+CM_ SG_ 951 BRAKE_LIGHTS_ACC "brake lights when ACC commands decel";
+
+0x25
+BO_ 37 STEER_ANGLE_SENSOR: 8 XXX
+ SG_ STEER_ANGLE : 3|12@0- (1.5,0) [-500|500] "deg" XXX
+ SG_ STEER_FRACTION : 39|4@0- (0.1,0) [-0.7|0.7] "deg" XXX
+ SG_ STEER_RATE : 35|12@0- (1,0) [-2000|2000] "deg/s" XXX
+
+CM_ SG_ 37 STEER_FRACTION "1/15th of the signal STEER_ANGLE, which is 1.5 deg; note that 0x8 is never set";
+CM_ SG_ 37 STEER_RATE "factor is tbd";
+
+0x260
+BO_ 608 STEER_TORQUE_SENSOR: 8 XXX
+ SG_ STEER_TORQUE_EPS : 47|16@0- (1,0) [-32768|32767] "" XXX
+ SG_ STEER_TORQUE_DRIVER : 15|16@0- (1,0) [-32768|32767] "" XXX
+ SG_ STEER_ANGLE : 31|16@0- (0.0573,0) [-500|500] "" XXX
+ SG_ STEER_ANGLE_INITIALIZING : 3|1@0+ (1,0) [0|1] "" XXX
+ SG_ STEER_OVERRIDE : 0|1@0+ (1,0) [0|1] "" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 608 STEER_TORQUE_DRIVER "driver torque";
+CM_ SG_ 608 STEER_OVERRIDE "set when driver torque exceeds a certain value";
+
+0x262
+BO_ 610 EPS_STATUS: 5 EPS
+ SG_ IPAS_STATE : 3|4@0+ (1,0) [0|15] "" XXX
+ SG_ LKA_STATE : 31|7@0+ (1,0) [0|127] "" XXX
+ SG_ TYPE : 24|1@0+ (1,0) [0|1] "" XXX
+ SG_ CHECKSUM : 39|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 610 TYPE "seems 1 on Corolla, 0 on all others";
+VAL_ 610 IPAS_STATE 5 "override" 3 "enabled" 1 "disabled";
+VAL_ 610 LKA_STATE 25 "temporary_fault" 9 "temporary_fault2" 5 "active" 1 "standby";
+
+0x622
+BO_ 1570 LIGHT_STALK: 8 SCM
+ SG_ AUTO_HIGH_BEAM : 37|1@0+ (1,0) [0|1] "" XXX
+ SG_ FRONT_FOG : 27|1@0+ (1,0) [0|1] "" XXX
+ SG_ PARKING_LIGHT : 28|1@0+ (1,0) [0|1] "" XXX
+ SG_ LOW_BEAM : 29|1@0+ (1,0) [0|1] "" XXX
+ SG_ HIGH_BEAM : 30|1@0+ (1,0) [0|1] "" XXX
+ SG_ DAYTIME_RUNNING_LIGHT : 31|1@0+ (1,0) [0|1] "" XXX
+
+0x283
+BO_ 643 PRE_COLLISION: 7 DSU
+ SG_ _COUNTER : 7|8@0+ (1,0) [0|255] "" XXX
+ SG_ SET_ME_X00 : 15|8@0+ (1,0) [0|255] "" XXX
+ SG_ FORCE : 23|16@0- (2,0) [0|255] "N" XXX
+ SG_ SET_ME_X002 : 33|8@0+ (1,0) [0|3] "" XXX
+ SG_ BRAKE_STATUS : 39|3@0+ (1,0) [0|255] "" XXX
+ SG_ STATE : 36|3@0+ (1,0) [0|255] "" XXX
+ SG_ SET_ME_X003 : 40|1@0+ (1,0) [0|1] "" XXX
+ SG_ PRECOLLISION_ACTIVE : 41|1@0+ (1,0) [0|255] "" XXX
+ SG_ CHECKSUM : 55|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 643 _COUNTER "only used on cars that use this msg for cruise control";
+CM_ SG_ 643 BRAKE_STATUS "only used on cars that use this msg for cruise control";
+CM_ SG_ 643 PRECOLLISION_ACTIVE "set 0.5s before any braking";
+VAL_ 643 STATE 0 "normal" 1 "adaptive_cruise_control" 3 "emergency_braking";
+
+0x224
+BO_ 548 BRAKE_MODULE: 8 XXX
+ SG_ BRAKE_PRESSURE : 43|12@0+ (1,0) [0|4047] "" XXX
+ SG_ BRAKE_PRESSED : 5|1@0+ (1,0) [0|1] "" XXX
+
+0x610
+BO_ 1552 BODY_CONTROL_STATE_2: 8 XXX
+ SG_ UI_SPEED : 23|8@0+ (1,0) [0|255] "" XXX
+ SG_ METER_SLIDER_BRIGHTNESS_PCT : 30|7@0+ (1,0) [12|100] "%" XXX
+ SG_ METER_SLIDER_LOW_BRIGHTNESS : 37|1@0+ (1,0) [0|1] "" XXX
+ SG_ METER_SLIDER_DIMMED : 38|1@0+ (1,0) [0|1] "" XXX
+ SG_ UNITS : 63|3@0+ (1,0) [1|4] "" XXX
+
+CM_ SG_ 548 BRAKE_PRESSURE "seems prop to pedal force";
+CM_ SG_ 548 BRAKE_POSITION "seems proportional to pedal displacement, unclear the max value of 0x1c8";
+
+CM_ SG_ 1552 METER_SLIDER_BRIGHTNESS_PCT "Combination display brightness setting, scales from 12 per cent to 100 per cent, reflects combination meter settings only, not linked with headlight state";
+CM_ SG_ 1552 METER_SLIDER_LOW_BRIGHTNESS "Combination display low brightness mode, also controls footwell lighting";
+CM_ SG_ 1552 METER_SLIDER_DIMMED "Combination display slider not at max, reflects combination meter settings only, not linked with headlight state";
+VAL_ 1552 METER_SLIDER_LOW_BRIGHTNESS 1 "Low brightness mode, footwell lights off" 0 "Normal mode, footwell lights on";
+VAL_ 1552 METER_SLIDER_DIMMED 1 "Dimmed" 0 "Not Dimmed";
+VAL_ 1552 UNITS 1 "km (km/L)" 2 "km (L/100km)" 3 "miles (MPG US)" 4 "miles (MPG Imperial)";
+
+0x399
+BO_ 921 PCM_CRUISE_SM: 8 XXX
+ SG_ MAIN_ON : 4|1@0+ (1,0) [0|1] "" XXX
+ SG_ CRUISE_CONTROL_STATE : 11|4@0+ (1,0) [0|15] "" XXX
+ SG_ DISTANCE_LINES : 14|2@0+ (1,0) [0|3] "" XXX
+ SG_ TEMP_ACC_FAULTED : 15|1@0+ (1,0) [0|1] "" XXX
+ SG_ UI_SET_SPEED : 31|8@0+ (1,0) [0|255] "" XXX
+
+CM_ SG_ 921 UI_SET_SPEED "set speed shown in the vehicle's UI with the vehicle's unit";
+CM_ SG_ 921 TEMP_ACC_FAULTED "1 when the UI is displaying or playing fault-related alerts or sounds. Also 1 when pressing main on.";
+VAL_ 921 CRUISE_CONTROL_STATE 2 "disabled" 11 "hold" 10 "hold_waiting_user_cmd" 6 "enabled" 5 "faulted";
+VAL_ 921 DISTANCE_LINES 0 "not displayed" 1 "close" 2 "medium" 3 "far";
+
+0x1C4
+BO_ 452 ENGINE_RPM: 8 CGW
+ SG_ RPM : 7|16@0- (0.78125,0) [0|0] "rpm" SCS
+ SG_ ENGINE_RUNNING : 27|1@0+ (1,0) [0|1] "" XXX
+
+0x320
+BO_ 800 VSC1S07: 8 CGW
+ SG_ FBKRLY : 6|1@0+ (1,0) [0|0] "" DS1
+ SG_ FVSCM : 4|1@0+ (1,0) [0|0] "" DS1
+ SG_ FVSCSFT : 3|1@0+ (1,0) [0|0] "" DS1
+ SG_ FABS : 2|1@0+ (1,0) [0|0] "" DS1,FCM
+ SG_ TSVSC : 1|1@0+ (1,0) [0|0] "" DS1
+ SG_ FVSCL : 0|1@0+ (1,0) [0|0] "" DS1
+ SG_ RQCSTBKB : 15|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ PSBSTBY : 14|1@0+ (1,0) [0|0] "" DS1
+ SG_ P2BRXMK : 13|1@0+ (1,0) [0|0] "" DS1
+ SG_ MCC : 11|1@0+ (1,0) [0|0] "" DS1
+ SG_ RQBKB : 10|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ BRSTOP : 9|1@0+ (1,0) [0|0] "" DS1,FCM
+ SG_ BRKON : 8|1@0+ (1,0) [0|0] "" DS1,FCM
+ SG_ ASLP : 23|8@0- (1,0) [0|0] "deg" DS1
+ SG_ BRTYPACC : 31|2@0+ (1,0) [0|0] "" DS1
+ SG_ BRKABT3 : 26|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ BRKABT2 : 25|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ BRKABT1 : 24|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ GVC : 39|8@0- (0.04,0) [0|0] "m/s^2" DS1
+ SG_ XGVCINV : 43|1@0+ (1,0) [0|0] "" DS1
+ SG_ S07CNT : 52|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ PCSBRSTA : 50|2@0+ (1,0) [0|0] "" DS1
+ SG_ VSC07SUM : 63|8@0+ (1,0) [0|0] "" DS1,FCM
+
+CM_ SG_ 800 SLOPE_ANGLE "potentially used by the PCM to compensate for road pitch";
+CM_ SG_ 800 ACCEL "filtered ego acceleration";
