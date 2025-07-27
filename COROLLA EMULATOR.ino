@@ -11,52 +11,34 @@ bool OP_ANSCHALTEN = false;
 // =========================
 
 // -------- PCM_CRUISE (0x1D2 / 466) --------
-// GAS_RELEASED: 0 = kein Gas freigegeben, 1 = Gas freigegeben
-// CRUISE_ACTIVE: 0 = ACC aus, 1 = ACC aktiv
-// ACC_BRAKING: 0 = kein ACC Bremsen, 1 = ACC bremst
-// ACCEL_NET: [-20|20] m/s^2, Faktor: 0.0009765625, Offset: 0
-// NEUTRAL_FORCE: [-65536|65534] N, Faktor: 2, Offset: 0
-// CRUISE_STATE: 0=off, 1=non-adaptive engaged, 2=non-adaptive being engaged, 8=adaptive engaged, 11=timer_3sec, 7=standstill, 9/10=click up/down
-// CANCEL_REQ: 0 = kein Cancel, 1 = Cancel
-uint8_t PCM_CRUISE_GAS_RELEASED = 0;
-uint8_t PCM_CRUISE_CRUISE_ACTIVE = 1;
-uint8_t PCM_CRUISE_ACC_BRAKING = 0;
-float PCM_CRUISE_ACCEL_NET = 0.5; // m/s^2
-int16_t PCM_CRUISE_NEUTRAL_FORCE = 0; // N
-uint8_t PCM_CRUISE_CRUISE_STATE = 2;
-uint8_t PCM_CRUISE_CANCEL_REQ = 0;
+uint8_t PCM_CRUISE_GAS_RELEASED = 0; // GAS_RELEASED: 0 = kein Gas freigegeben, 1 = Gas freigegeben
+uint8_t PCM_CRUISE_CRUISE_ACTIVE = 1; // CRUISE_ACTIVE: 0 = ACC aus, 1 = ACC aktiv
+uint8_t PCM_CRUISE_ACC_BRAKING = 0; // ACC_BRAKING: 0 = kein ACC Bremsen, 1 = ACC bremst
+float PCM_CRUISE_ACCEL_NET = 0.5; // m/s^2 // ACCEL_NET: [-20|20] m/s^2, Faktor: 0.0009765625, Offset: 0
+int16_t PCM_CRUISE_NEUTRAL_FORCE = 0; // N // NEUTRAL_FORCE: [-65536|65534] N, Faktor: 2, Offset: 0
+uint8_t PCM_CRUISE_CRUISE_STATE = 8; // CRUISE_STATE: 0=off, 1=non-adaptive engaged, 2=non-adaptive being engaged, 8=adaptive engaged, 11=timer_3sec, 7=standstill, 9/10=click up/down
+uint8_t PCM_CRUISE_CANCEL_REQ = 0; // CANCEL_REQ: 0 = kein Cancel, 1 = Cancel
 
 // -------- PCM_CRUISE_2 (0x1D3 / 467) --------
-// BRAKE_PRESSED: 0 = nicht gedrückt, 1 = gedrückt
-// PCM_FOLLOW_DISTANCE: 1=far, 2=medium, 3=close
-// LOW_SPEED_LOCKOUT: 0=none, 1=ok, 2=locked
-// MAIN_ON: 0=aus, 1=ein
-// SET_SPEED: [0|255] km/h
-// ACC_FAULTED: 0=kein Fehler, 1=Fehler
-uint8_t PCM_CRUISE_2_BRAKE_PRESSED = 0;
-uint8_t PCM_CRUISE_2_PCM_FOLLOW_DISTANCE = 2; // medium
-uint8_t PCM_CRUISE_2_LOW_SPEED_LOCKOUT = 0;
-uint8_t PCM_CRUISE_2_MAIN_ON = 1;
-uint8_t PCM_CRUISE_2_SET_SPEED = 100; // km/h
-uint8_t PCM_CRUISE_2_ACC_FAULTED = 0;
+uint8_t PCM_CRUISE_2_BRAKE_PRESSED = 0; // BRAKE_PRESSED: 0 = nicht gedrückt, 1 = gedrückt
+uint8_t PCM_CRUISE_2_PCM_FOLLOW_DISTANCE = 2; // PCM_FOLLOW_DISTANCE: 1=far, 2=medium, 3=close
+uint8_t PCM_CRUISE_2_LOW_SPEED_LOCKOUT = 0; // LOW_SPEED_LOCKOUT: 0=none, 1=ok, 2=locked
+uint8_t PCM_CRUISE_2_MAIN_ON = 1; // MAIN_ON: 0=aus, 1=ein
+uint8_t PCM_CRUISE_2_SET_SPEED = 100; // SET_SPEED: [0|255] km/h
+uint8_t PCM_CRUISE_2_ACC_FAULTED = 0; // ACC_FAULTED: 0=kein Fehler, 1=Fehler
 
 // -------- WHEEL_SPEEDS (0xAA / 170) --------
-// WHEEL_SPEED_*: [0|250] km/h, Faktor: 0.01, Offset: -67.67
-float WHEEL_SPEEDS_FR = 60;
-float WHEEL_SPEEDS_FL = 60;
-float WHEEL_SPEEDS_RR = 60;
-float WHEEL_SPEEDS_RL = 60;
+float WHEEL_SPEEDS_FR = 60; // WHEEL_SPEED_*: [0|250] km/h, Faktor: 0.01, Offset: -67.67
+float WHEEL_SPEEDS_FL = 60; // WHEEL_SPEED_*: [0|250] km/h, Faktor: 0.01, Offset: -67.67
+float WHEEL_SPEEDS_RR = 60; // WHEEL_SPEED_*: [0|250] km/h, Faktor: 0.01, Offset: -67.67
+float WHEEL_SPEEDS_RL = 60; // WHEEL_SPEED_*: [0|250] km/h, Faktor: 0.01, Offset: -67.67
 
 // -------- BLINKERS_STATE (0x614 / 1556) --------
-// BLINKER_BUTTON_PRESSED: 0=not pressed, 1=pressed
-// HAZARD_LIGHT: 0=aus, 1=an
-// TURN_SIGNALS: 1=links, 2=rechts, 3=none
-uint8_t BLINKERS_BUTTON_PRESSED = 0;
-uint8_t BLINKERS_HAZARD_LIGHT = 0;
-uint8_t BLINKERS_TURN_SIGNALS = 1; // 1=links
+uint8_t BLINKERS_BUTTON_PRESSED = 0; // BLINKER_BUTTON_PRESSED: 0=not pressed, 1=pressed
+uint8_t BLINKERS_HAZARD_LIGHT = 0; // HAZARD_LIGHT: 0=aus, 1=an
+uint8_t BLINKERS_TURN_SIGNALS = 3; // TURN_SIGNALS: 1=links, 2=rechts, 3=none
 
 // -------- BODY_CONTROL_STATE (0x620 / 1568) --------
-// METER_DIMMED, PARKING_BRAKE, SEATBELT_DRIVER_UNLATCHED, DOOR_OPEN_*
 uint8_t BCS_METER_DIMMED = 0;
 uint8_t BCS_PARKING_BRAKE = 0;
 uint8_t BCS_SEATBELT_DRIVER_UNLATCHED = 0;
@@ -66,21 +48,15 @@ uint8_t BCS_DOOR_OPEN_RL = 0;
 uint8_t BCS_DOOR_OPEN_RR = 0;
 
 // -------- GEAR_PACKET (0x3BC / 956) --------
-// SPORT_ON: 1=an
-// GEAR: 0=D, 1=S, 8=N, 16=R, 32=P
-// SPORT_GEAR_ON: 1=an
-// SPORT_GEAR: 1=S1...6=S6
-// ECON_ON, B_GEAR_ENGAGED, DRIVE_ENGAGED: 0=aus, 1=an
-uint8_t GEAR_SPORT_ON = 1;
-uint8_t GEAR_GEAR = 4; // S4
-uint8_t GEAR_SPORT_GEAR_ON = 1;
-uint8_t GEAR_SPORT_GEAR = 1; // S1
-uint8_t GEAR_ECON_ON = 0;
-uint8_t GEAR_B_GEAR_ENGAGED = 0;
-uint8_t GEAR_DRIVE_ENGAGED = 1;
+uint8_t GEAR_SPORT_ON = 0; // SPORT_ON: 1=an
+uint8_t GEAR_GEAR = 0; // // GEAR: 0=D, 1=S, 8=N, 16=R, 32=P
+uint8_t GEAR_SPORT_GEAR_ON = 0; // SPORT_GEAR_ON: 1=an
+uint8_t GEAR_SPORT_GEAR = 1; // SPORT_GEAR: 1=S1...6=S6
+uint8_t GEAR_ECON_ON = 0; // 0=aus, 1=an
+uint8_t GEAR_B_GEAR_ENGAGED = 0; //0=aus, 1=an
+uint8_t GEAR_DRIVE_ENGAGED = 1; //0=aus, 1=an
 
 // -------- ESP_CONTROL (0x3B7 / 951) --------
-// TC_DISABLED, VSC_DISABLED, BRAKE_LIGHTS_ACC, BRAKE_HOLD_ENABLED, BRAKE_HOLD_ACTIVE
 uint8_t ESP_TC_DISABLED = 0;
 uint8_t ESP_VSC_DISABLED = 0;
 uint8_t ESP_BRAKE_LIGHTS_ACC = 0;
@@ -88,31 +64,21 @@ uint8_t ESP_BRAKE_HOLD_ENABLED = 0;
 uint8_t ESP_BRAKE_HOLD_ACTIVE = 0;
 
 // -------- STEER_ANGLE_SENSOR (0x25 / 37) --------
-// STEER_ANGLE: [-500|500] deg, Faktor: 1.5, Offset: 0
-// STEER_FRACTION: [-0.7|0.7] deg, Faktor: 0.1, Offset: 0
-// STEER_RATE: [-2000|2000] deg/s, Faktor: 1, Offset: 0
-float SAS_ANGLE = 10;
-float SAS_FRACTION = 0.2;
-float SAS_RATE = 100;
+float SAS_ANGLE = 10; // STEER_ANGLE: [-500|500] deg, Faktor: 1.5, Offset: 0
+float SAS_FRACTION = 0.2; // STEER_FRACTION: [-0.7|0.7] deg, Faktor: 0.1, Offset: 0
+float SAS_RATE = 100; // STEER_RATE: [-2000|2000] deg/s, Faktor: 1, Offset: 0
 
 // -------- STEER_TORQUE_SENSOR (0x260 / 608) --------
-// STEER_TORQUE_EPS: [-32768|32767] Nm
-// STEER_TORQUE_DRIVER: [-32768|32767] Nm
-// STEER_ANGLE: [-500|500] deg, Faktor: 0.0573
-// STEER_ANGLE_INITIALIZING, STEER_OVERRIDE
-int16_t STS_TORQUE_EPS = 100;
-int16_t STS_TORQUE_DRIVER = 5;
-float   STS_ANGLE = 20;
-uint8_t STS_ANGLE_INITIALIZING = 0;
-uint8_t STS_OVERRIDE = 0;
+int16_t STS_TORQUE_EPS = 1200; // STEER_TORQUE_EPS: [-32768|32767] Nm
+int16_t STS_TORQUE_DRIVER = 5; // STEER_TORQUE_DRIVER: [-32768|32767] Nm
+float   STS_ANGLE = 20; // STEER_ANGLE: [-500|500] deg, Faktor: 0.0573
+uint8_t STS_ANGLE_INITIALIZING = 0; // STEER_ANGLE_INITIALIZING
+uint8_t STS_OVERRIDE = 0; // STEER_OVERRIDE
 
 // -------- EPS_STATUS (0x262 / 610) --------
-// IPAS_STATE: 0=off, 1=disabled, 3=enabled, 5=override
-// LKA_STATE: 1=standby, 5=active, 9=tmp_fault2, 25=tmp_fault
-// TYPE: 0=andere, 1=Corolla
-uint8_t EPS_IPAS_STATE = 0;
-uint8_t EPS_LKA_STATE = 1;
-uint8_t EPS_TYPE = 0;
+uint8_t EPS_IPAS_STATE = 0; // IPAS_STATE: 0=off, 1=disabled, 3=enabled, 5=override
+uint8_t EPS_LKA_STATE = 5; // LKA_STATE: 1=standby, 5=active, 9=tmp_fault2, 25=tmp_fault
+uint8_t EPS_TYPE = 0; // TYPE: 0=andere, 1=Corolla
 
 // -------- LIGHT_STALK (0x622 / 1570) --------
 uint8_t LS_AUTO_HIGH_BEAM = 0;
@@ -145,7 +111,7 @@ uint8_t BCS2_UNITS = 1; // 1=km/h
 
 // -------- PCM_CRUISE_SM (0x399 / 921) --------
 uint8_t PCMSM_MAIN_ON = 1;
-uint8_t PCMSM_CRUISE_CONTROL_STATE = 2;
+uint8_t PCMSM_CRUISE_CONTROL_STATE = 8;
 uint8_t PCMSM_DISTANCE_LINES = 2;
 uint8_t PCMSM_TEMP_ACC_FAULTED = 0;
 uint8_t PCMSM_UI_SET_SPEED = 100;
@@ -198,7 +164,7 @@ void loop() {
 
   // OP_ANSCHALTEN alle 5 Sekunden toggeln (MAIN_ON & CRUISE_ACTIVE)
     unsigned long now = millis();
-  if (now - lastOpToggleMillis >= 5000) {
+  if (now - lastOpToggleMillis >= 2000) {
     lastOpToggleMillis = now;
     OP_ANSCHALTEN = !OP_ANSCHALTEN;
 
