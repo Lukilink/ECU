@@ -1,11 +1,14 @@
-// MAIN ECU
-// To Do: CAN READ Messages an dbc anpassen
+// MAIN ECU V2
 
 
 #include <CAN.h>
 
 //______________VALUES READ ON CAN
-boolean BRAKE_PRESSED = true;
+// -------- BRAKE_MODULE (0x224 / 548) -------- KOMMT DANN VON BRAKE ECU 
+uint16_t BRAKE_PRESSURE = 0;
+uint8_t BRAKE_PRESSED = 1;
+
+
 boolean GAS_RELEASED = false;
 
 //______________BUTTONS / SWITCHES / VALUES
@@ -143,11 +146,6 @@ uint8_t PRECOLL_STATE = 1; // 0=normal, 1=adaptive_cc, 3=emergency_braking
 uint8_t PRECOLL_SET_ME_X003 = 0;
 uint8_t PRECOLL_ACTIVE = 0;
 
-/*
-// -------- BRAKE_MODULE (0x224 / 548) -------- KOMMT DANN VON BRAKE ECU 
-uint16_t BRAKE_PRESSURE = 0;
-uint8_t BRAKE_PRESSED = 0;
-*/
 
 // -------- BODY_CONTROL_STATE_2 (0x610 / 1552) --------
 uint8_t BCS2_UI_SPEED = 100;
@@ -708,7 +706,8 @@ lastGAS_RELEASED = GAS_RELEASED;
 
 //______________READING CAN
   CAN.parsePacket();
-  
+
+/* ALT 
   //0x3b7 msg ESP_CONTROL --- WE are sending the 0x3b7 message from Brake_ECU, to reduce traffic on the can and improve safety
     if (CAN.packetId() == 0x3b7)
       {
@@ -718,6 +717,30 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         BRAKE_PRESSED = (dat_3b7[0] << 5);
         }
+ */ 
+
+  if (CAN.packetId() == 0x3b7) {
+  uint8_t dat_3b7[8];
+  for (int ii = 0; ii < 8; ii++) {
+    dat_3b7[ii] = (uint8_t) CAN.read();
+  }
+  ESP_TC_DISABLED = (dat_3b7[1] >> 5) & 0x01;
+  ESP_VSC_DISABLED = (dat_3b7[1] >> 4) & 0x03;
+  ESP_BRAKE_LIGHTS_ACC = (dat_3b7[2] >> 2) & 0x01;
+  ESP_BRAKE_HOLD_ENABLED = (dat_3b7[4] >> 0) & 0x01;
+  ESP_BRAKE_HOLD_ACTIVE = (dat_3b7[4] >> 4) & 0x01;
+  }
+
+if (CAN.packetId() == 0x224) {
+    uint8_t dat_224[8];
+    for (int ii = 0; ii < 8; ii++) {
+        dat_224[ii] = (uint8_t) CAN.read();
+    }
+    BRAKE_PRESSED = (dat_224[0] >> 5) & 0x01;
+    uint16_t pressure_raw = ((dat_224[5] >> 3) & 0x1F);          // Bits 3-7 von Byte 5 (5 Bit)
+    pressure_raw |= ((uint16_t)(dat_224[6] & 0x7F)) << 5;        // Bits 0-6 von Byte 6 (7 Bit)
+    BRAKE_PRESSURE = pressure_raw; 
+}
   
     //0x2c1 msg GAS_PEDAL
     if (CAN.packetId() == 0x2c1)
@@ -728,6 +751,7 @@ lastGAS_RELEASED = GAS_RELEASED;
         }
         GAS_RELEASED = (dat_2c1[0] << 3);
         }
+
   
   
 } //______________END OF LOOP
