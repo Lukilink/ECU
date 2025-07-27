@@ -3,8 +3,8 @@
 // ====== SIGNAL-VARIABLEN AUS DBC ======
 
 // PCM_CRUISE (0x1d2)
-bool GAS_RELEASED = false;
-bool CRUISE_ACTIVE = false; //
+bool GAS_RELEASED = true;
+bool CRUISE_ACTIVE = true; //
 bool ACC_BRAKING = false; //"whether brakes are being actuated from ACC command";
 float ACCEL_NET = 0.0;            // m/s^2 [-20..20] "net negative acceleration (braking) applied by the system if on flat ground";
 int16_t NEUTRAL_FORCE = 0;        // N [-65536..65534] "force in newtons the engine/electric motors are applying without any acceleration commands or user input"
@@ -16,14 +16,14 @@ bool BRAKE_PRESSED = false;
 uint8_t PCM_FOLLOW_DISTANCE = 0;  // [0..3]
 uint8_t LOW_SPEED_LOCKOUT = 0;    // [0..3]
 bool MAIN_ON = true;
-uint8_t SET_SPEED = 70;            // km/h [0..255]
+uint8_t SET_SPEED = 10;            // km/h [0..255]
 bool ACC_FAULTED = false;
 
 // WHEEL_SPEEDS (0xaa)
-float WHEEL_SPEED_FR = 60.0;       // km/h [0..250]
-float WHEEL_SPEED_FL = 60.0;       // km/h [0..250]
-float WHEEL_SPEED_RR = 60.0;        // km/h [0..250]
-float WHEEL_SPEED_RL = 60.0;        // km/h [0..250]
+float WHEEL_SPEED_FR = 10.0;       // km/h [0..250]
+float WHEEL_SPEED_FL = 10.0;       // km/h [0..250]
+float WHEEL_SPEED_RR = 10.0;        // km/h [0..250]
+float WHEEL_SPEED_RL = 10.0;        // km/h [0..250]
 
 // BLINKERS_STATE (0x614)
 bool BLINKER_BUTTON_PRESSED = false;
@@ -42,8 +42,8 @@ bool DOOR_OPEN_FR = false;
 // GEAR_PACKET (0x3bc)
 bool SPORT_ON = false; // 0 "off" 1 "on";
 uint8_t GEAR = 0;     // GEAR 0 "D" 1 "S" 8 "N" 16 "R" 32 "P";
-bool SPORT_GEAR_ON = 1; // SPORT_GEAR_ON 0 "off" 1 "on";
-uint8_t SPORT_GEAR = 1; // SPORT_GEAR 1 "S1" 2 "S2" 3 "S3" 4 "S4" 5 "S5" 6 "S6";
+bool SPORT_GEAR_ON = 0; // SPORT_GEAR_ON 0 "off" 1 "on";
+uint8_t SPORT_GEAR = 0; // SPORT_GEAR 1 "S1" 2 "S2" 3 "S3" 4 "S4" 5 "S5" 6 "S6";
 bool ECON_ON = 0; //ECON_ON 0 "off" 1 "on";
 bool B_GEAR_ENGAGED = 0; //B_GEAR_ENGAGED 0 "off" 1 "on";
 bool DRIVE_ENGAGED = 1; //DRIVE_ENGAGED 0 "off" 1 "on";
@@ -68,8 +68,8 @@ bool STEER_ANGLE_INITIALIZING = false;
 bool STEER_OVERRIDE = false;
 
 // EPS_STATUS (0x262)
-uint8_t IPAS_STATE = 1;           // [0..15] VAL_ 610 IPAS_STATE 5 "override" 3 "enabled" 1 "disabled";
-uint8_t LKA_STATE = 1;            // [0..127] VAL_ 610 LKA_STATE 25 "temporary_fault" 9 "temporary_fault2" 5 "active" 1 "standby";
+uint8_t IPAS_STATE = 3;           // [0..15] VAL_ 610 IPAS_STATE 5 "override" 3 "enabled" 1 "disabled";
+uint8_t LKA_STATE = 5;            // [0..127] VAL_ 610 LKA_STATE 25 "temporary_fault" 9 "temporary_fault2" 5 "active" 1 "standby";
 bool TYPE = 1; //"seems 1 on Corolla, 0 on all others";
 
 // ====== CAN CHECKSUM (wie gehabt) ======
@@ -169,7 +169,7 @@ void loop() {
     CAN.endPacket();
   }
 
-  // ====== BODY_CONTROL_STATE (0x620) ======
+ // ====== BODY_CONTROL_STATE (0x620) ======
   {
     uint8_t d[8] = {0};
     d[4] |= (METER_DIMMED ? 1 : 0) << 6;
@@ -183,7 +183,7 @@ void loop() {
     for (int i = 0; i < 8; i++) CAN.write(d[i]);
     CAN.endPacket();
   }
-
+ 
   // ====== GEAR_PACKET (0x3bc) ======
   {
     uint8_t d[8] = {0};
@@ -200,6 +200,8 @@ void loop() {
     for (int i = 0; i < 8; i++) CAN.write(d[i]);
     CAN.endPacket();
   }
+
+
 
   // ====== ESP_CONTROL (0x3b7) ======
   {
